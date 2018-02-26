@@ -42,7 +42,7 @@ example
 example
 
     global.db.Update('default','news',['title'],{title:'hi',createAt:new Date()},(error,data)=>{
-        // After run Save
+        // After run Update
     })
     
 ### Delete 
@@ -52,7 +52,7 @@ example
 example
 
     global.db.Delete('default','news',['title'],{title:'hi'},(error,data)=>{
-        // After run Save
+        // After run Delete
     })
 
 ### Search
@@ -75,17 +75,21 @@ If you want to use "query" :
 
 - select
 
-example:
+examples:
 
     select:['firstName','lastrName','age']
 
     select : ['age',{type:'function',name:'sum',field:'score',title:'totalScore'}]
         
 - order by
+
+example:
             
     order:[['age','ASC'],['score','DESC']]      
 
 - where
+
+examples:
 
 grater than
 

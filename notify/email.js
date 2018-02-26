@@ -7,8 +7,8 @@ module.exports = class emailService
     this.config=config 
     this.transporter = nodemailer.createTransport({
             host: config.host,
-            port: config.port,
-            secure: config.secure, // true for 465, false for other ports
+            port: config.port | 465,
+            secure: config.secure | true, // true for 465, false for other ports
             auth: {
                 user: config.username, // generated ethereal user
                 pass: config.password  // generated ethereal password

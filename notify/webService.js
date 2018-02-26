@@ -1,5 +1,5 @@
 
-module.exports = class emailService
+module.exports = class nofifyWebService
 {
     constructor(config)
     {
@@ -34,11 +34,11 @@ module.exports = class emailService
             }
             var option=JSON.parse(JSON.stringify(self.config.option))
             option[self.config.toField]=obj.to
-            option[self.config.toText]=tmp.text
-            if(self.config.toTitle)
-                option[self.config.toTitle]=tmp.title
-            if(self.config.toHtml)
-                option[self.config.html]=tmp.html
+            option[self.config.textField]=tmp.text
+            if(self.config.titleField)
+                option[self.config.titleField]=tmp.title
+            if(self.config.htmlField)
+                option[self.config.htmlField]=tmp.html
             this.connection.post(this.config.sendUrl,option, function(res){
                 res.setEncoding('utf8');
                 res.on('data', function(chunk) {
