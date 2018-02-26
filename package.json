@@ -16,6 +16,24 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "captchapng": "0.0.1",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.16.2",
+    "express-session": "^1.15.6",
+    "http": "0.0.0",
+    "jalaali-js": "^1.1.0",
+    "mellat-payment": "^1.0.0",
+    "mongodb": "^3.0.2",
+    "mysql": "^2.15.0",
+    "node-telegram-bot-api": "^0.30.0",
+    "odata-v4-mongodb": "^0.1.12",
+    "odata-v4-mysql": "^0.1.1",
+    "promise": "^8.0.1",
+    "request": "^2.83.0",
+    "uuid": "^3.2.1",
+    "websocket": "^1.0.25"
+  },
   "bugs": {
     "url": "https://github.com/vahidHossaini/origami/issues"
   },
