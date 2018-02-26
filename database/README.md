@@ -30,6 +30,7 @@ if object is exist update else insert
     global.db.Save('{connectionName}','{table or collection Name}',[{key list}],object,{Function})
     
 example
+
     global.db.Save('default','news',['title'],{title:'hi',createAt:new Date()},(error,data)=>{
         // After run Save
     })
@@ -39,6 +40,7 @@ example
     global.db.Update('{connectionName}','{table or collection Name}',[{key list}],object,{Function})
     
 example
+
     global.db.Update('default','news',['title'],{title:'hi',createAt:new Date()},(error,data)=>{
         // After run Save
     })
@@ -48,6 +50,7 @@ example
     global.db.Delete('{connectionName}','{table or collection Name}',[{key list}],object,{Function})
     
 example
+
     global.db.Delete('default','news',['title'],{title:'hi'},(error,data)=>{
         // After run Save
     })

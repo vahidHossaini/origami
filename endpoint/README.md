@@ -48,4 +48,5 @@ for example:http://example.com:8080/auth/login?username=user&password=pass
 ## Telgram 
 for more information : [Doc](https://github.com/vahidHossaini/origami/tree/master/botrunner)
 
-## socket http(s)://example.com:{port}      data:{domain:'{domain}',service:'{service(function)}',param:{param1:value1,param2:value2,...} }
+## socket 
+http(s)://example.com:{port}      data:{domain:'{domain}',service:'{service(function)}',param:{param1:value1,param2:value2,...} }
