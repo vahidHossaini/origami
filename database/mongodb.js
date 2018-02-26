@@ -214,7 +214,7 @@ module.exports = class mongodb
                 if(a.name=='count')
                     grp[a.title]={ $sum: 1 } 
                 if(a.name=='sum')
-                    grp[a.title]={ $sum: a.fild } 
+                    grp[a.title]={ $sum: a.field } 
             }
             marr.push({$group:grp})
             pxt=pxt.aggregate(marr)

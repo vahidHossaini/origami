@@ -210,7 +210,7 @@ module.exports = class mysqlService
     if(selectGroup.length)
     {
         for(var a of selectGroup)
-            syntax+=a.name+'('+a.fild+') as ' + a.title +' ,'
+            syntax+=a.name+'('+a.field+') as ' + a.title +' ,'
          
         count +=' count( DISTINCT (' 
         for(var a of select)
