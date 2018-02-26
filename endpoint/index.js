@@ -5,7 +5,10 @@ module.exports = class endpoint
   {
     if(config.express)
     {
-      var exp=new(require('./express.js'))(config.express,dist)
+        for(var a of config.express)
+        {
+            var exp=new(require('./express.js'))(a,dist)            
+        }
     }
     if(config.telegram)
     {
