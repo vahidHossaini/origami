@@ -8,6 +8,8 @@ module.exports = class payment
         for(var d of config.driver)
         {
             this.drivers[d.name]=new (require('./'+d.type))(d,dist)
+            if(d.redirect)
+                dist.addFunction('payment',d.redirect,this.drivers[d.name].purchase,this) 
         }
     }
     getData(msg,func,self)
