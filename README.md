@@ -38,6 +38,7 @@ For More Information , See The Documentation For Each Module
 Run Http Service On Port 8080
 
 	var origami=require('origamicore')
+    global.path=__dirname 
 	var config=[
 	{
 		name:'endpoint',	
