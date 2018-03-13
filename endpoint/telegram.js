@@ -2,6 +2,7 @@ var url = require('url');
 var fs = require('fs');
 var uuid = require('uuid');
 var session={}
+var teType=require('../enums/type.js')
 module.exports=class telegram
 {
     constructor(config,dist)
@@ -23,12 +24,12 @@ module.exports=class telegram
     }
     onInlineQuery(msg)
     {
-        console.log('onInlineQuery')
-        console.log(msg)
+        //console.log('onInlineQuery')
+        //console.log(msg)
     }
     onGetMessage(msg)
     {
-    console.log(msg)
+    //console.log(msg)
         this.getUserid(msg.from.id,msg.from,(session)=>{
             var body={
                 session:session,
@@ -68,6 +69,42 @@ module.exports=class telegram
        // return console.log(data)
         if(data.keys)
             op.inline_keyboard=data.keys
+        if(data.telegramFile &&  data.fileType==teType.Photo)
+        {
+            
+            var opobj={reply_markup:op}
+            if(data.text)
+                opobj.caption=data.text 
+            this.bot.sendPhoto(data.chatid,data.telegramFile.telegramPath,opobj)
+            return
+        }
+        if(data.telegramFile &&  data.fileType==teType.Video)
+        {
+            
+            var opobj={reply_markup:op}
+            if(data.text)
+                opobj.caption=data.text 
+            this.bot.sendVideo(data.chatid,data.telegramFile.telegramPath,opobj)
+            return
+        }
+        if(data.telegramFile &&  data.fileType==teType.Audio)
+        {
+            
+            var opobj={reply_markup:op}
+            if(data.text)
+                opobj.caption=data.text 
+            this.bot.sendAudio(data.chatid,data.telegramFile.telegramPath,opobj)
+            return
+        }
+        if(data.telegramFile &&  data.fileType==teType.Document)
+        {
+            
+            var opobj={reply_markup:op}
+            if(data.text)
+                opobj.caption=data.text 
+            this.bot.sendDocument(data.chatid,data.telegramFile.telegramPath,opobj)
+            return
+        }
         this.bot.sendMessage(data.chatid,data.text,{reply_markup:op})
     }
     getUserid(id,user,func)
@@ -75,8 +112,8 @@ module.exports=class telegram
         if(session[id])
             return func(session[id]) 
         
-        console.log('getuserid')
-        console.log(id)
+        //console.log('getuserid')
+        //console.log(id)
         //return
         global.db.Search(this.context,'telegramUsers',{where:{id:id}},{},(e,d)=>{
            

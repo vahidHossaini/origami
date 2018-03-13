@@ -5,8 +5,7 @@ module.exports=class mellatService
     {
         this.terminal=config.terminal    
         this.username=config.username    
-        this.password=config.password    
-        this.amount=config.amount
+        this.password=config.password   
         this.verify=config.verify 
     }
     getData(msg,func,self)

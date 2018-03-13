@@ -1,4 +1,5 @@
 var route={}
+var Promise = require('promise');
 module.exports = class distributorService
 {
   constractor()
@@ -13,12 +14,28 @@ module.exports = class distributorService
 
   }
   run(domain,subDomain,data,func)
-  {
-        //console.log(route[domain][subDomain])
+  {   
     if(route[domain] && route[domain][subDomain])
     {
+       if(!func)
+       {
+            return new Promise(function (resolve, reject) {
+                route[domain][subDomain].func(data,(ee,dd)=>{
+                    if(ee)
+                        return reject(ee)
+                    //console.log('DataBase',domain,subDomain,dd)
+                    return resolve(dd)
+                },route[domain][subDomain].self)
+            })
+       }           
       return route[domain][subDomain].func(data,func,route[domain][subDomain].self)
     }
-    return func({routeMessage:'Not Mach'})
+    if(func)
+        return func({routeMessage:'Not Mach'})
+    
+    return new Promise(function (resolve, reject) {
+        reject({routeMessage:'Not Mach'})
+    })
+    
   }
 }
