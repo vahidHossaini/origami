@@ -43,7 +43,8 @@ class botStorage{
                 this.bot.sendPhoto(chatid,path)
                 .then((msg)=>{ 
                     this.bot.deleteMessage(chatid,msg.message_id);resolve(this.getelement(msg)  );})
-                .catch((data)=>{ 
+                .catch((data)=>{
+                    console.log('EXP>>>',data)
                     resolve()})
             }
             else if(type==teType.Audio)
@@ -52,13 +53,17 @@ class botStorage{
                 .then((msg)=>{
                    // console.log(msg)
                     this.bot.deleteMessage(chatid,msg.message_id);resolve(this.getelement(msg));})
-                .catch((data)=>{resolve()})
+                .catch((data)=>{
+                    console.log('EXP>>>',data)
+                    resolve()})
             }
             else if(type==teType.Document)
             {
                 this.bot.sendDocument(chatid,path)
                 .then((msg)=>{this.bot.deleteMessage(chatid,msg.message_id);resolve(this.getelement(msg));})
-                .catch((data)=>{resolve()})
+                .catch((data)=>{
+                    console.log('EXP>>>',data)
+                    resolve()})
             }
             else if(type==teType.Video)
             {
@@ -72,7 +77,9 @@ class botStorage{
             {
                 this.bot.sendSticker(chatid,path)
                 .then((msg)=>{this.bot.deleteMessage(chatid,msg.message_id);resolve(this.getelement(msg));})
-                .catch((data)=>{resolve()})
+                .catch((data)=>{
+                    console.log('EXP>>>',data)
+                    resolve()})
             }
             else
                 func({code:404})
@@ -87,7 +94,7 @@ class botStorage{
         {
             var dt = await this._send(data.fileType,a,data.path)
             
-        console.log('IMG ' ,dt )
+        console.log('IMG Send' ,dt )
             if(dt)
                 return  dt 
         }            
@@ -150,12 +157,24 @@ module.exports = class butrunner
         }
         catch(exp)
         {
+            console.log(exp)
             console.log(config.domain + ' Bot configFile Error')
         }
         
         dist.addFunction(config.domain,'onMessage',this.onMessage,this)
         dist.addFunction(config.domain,'onCallback',this.onCallback,this)
-        //dist.addFunction(config.domain,'onMessage',this.onMessage,this)
+        dist.addFunction(config.domain,'onInline',this.onInline,this)
+    }
+    onInline(msg,func,self)
+    {
+        var dt = msg.data 
+        var session=msg.session 
+        var param=msg.query
+        return self.driver.inline(dt,session,param,  (e,d)=>{
+            if(d && !d.chatid)
+                d.chatid=dt.from.id
+            func(e,d)
+        })
     }
     onCallback(msg,func,self)
     {
@@ -165,7 +184,7 @@ module.exports = class butrunner
         var param=url_parts.query
         console.log('--------------------')
         //console.log(param)
-        //console.log(session)
+        console.log('session : ',session)
         //console.log(param.b)
         var st=param.b
         if(!st)
@@ -180,39 +199,133 @@ module.exports = class butrunner
         //console.log('DESTEn',des)
         if(des)
         {
-            return self.driver[des](dt,session,param,  (e,d)=>{
-                if(!d.chatid)
-                    d.chatid=dt.from.id
-                self.sendRes(e,d,des,func)
-            })
+            //console.log(des)
+            //console.log(self.driver[des])
+            if(self.driver[des])
+                return self.driver[des](dt,session,param,  (e,d)=>{
+                    
+            console.log(des)
+                    if(d &&  !d.chatid)
+                        d.chatid=dt.from.id
+                    if(e)
+                        console.log('ERROR',e)
+                    self.sendRes(e,d,des,func)
+                })
+            return func({message:'notFound'})    
         }
+    }
+    notFound(self,startcommand,dt,session,func)
+    {
+        return self.driver[startcommand](dt,session,{},(e,d)=>{
+                        if(d &&  !d.chatid)
+                            d.chatid=dt.from.id
+                self.sendRes(e,d,startcommand,func)
+                
+            })
+        
     }
     onMessage(msg,func,self)
     {
         var dt = msg.data 
         var session=msg.session 
         
+        var startcommand='start' 
+        for(var a of self.config.commands)
+        {  
+            if(a.name.indexOf(startcommand)>=0)
+            {
+                startcommand=a.func
+                break
+            }
+        }
         for(var a of self.config.commands)
         {
             if(dt.text.indexOf(a.name)==0)
                 return self.driver[a.func](dt,session,{},(e,d)=>{
+                        if(d &&  !d.chatid)
+                            d.chatid=dt.from.id
                     self.sendRes(e,d,a.func,func)
                     
                 })
         }
             
         if(!session || !session.state)
-            return self.driver.start(dt,session,{},(e,d)=>{
-                    self.sendRes(e,d,'start',func)
-                    
+            return self.notFound(self,startcommand,dt,session,func) 
+        let param={input:dt.text}        
+        var st= session.state 
+        if(!self.conf.states[st])
+            return func({message:'state not found'})  
+        if(self.conf.inputs[st][dt.text])    
+        {
+            var des=self.conf.inputs[st][dt.text]
+            
+            if(self.driver[des])
+                return self.driver[des](dt,session,param,  (e,d)=>{
+                    if(d &&  !d.chatid)
+                        d.chatid=dt.from.id
+                    if(e)
+                        console.log('ERROR',e)
+                    self.sendRes(e,d,des,func)
                 })
+            return self.notFound(self,startcommand,dt,session,func) 
+        }
+        else if(self.conf.inputs[st]['$'])
+        {
+            let des=null
+            for(var a of self.conf.inputs[st]['$'])
+            {
+                if(a.type=='int')
+                {
+                    try{
+                        let n=parseInt(dt.text)
+                        param={input:n}  
+                        des=a.go   
+                    }catch(exp){}
+                }
+                else if(a.type=='float')
+                {
+                    try{
+                        let n=parseFloat(dt.text)
+                        param={input:n}  
+                        des=a.go   
+                    }catch(exp){}
+                }
+                else{
+                        param={input:dt.text}  
+                    console.log('>>>Inputs',param)
+                    des=a.go 
+                }
+            }
+            if(des)
+            {
+                if(self.driver[des])
+                    return self.driver[des](dt,session,param,  (e,d)=>{
+                        if(d &&  !d.chatid)
+                            d.chatid=dt.from.id
+                        if(e)
+                            console.log('ERROR',e)
+                        self.sendRes(e,d,des,func)
+                    })
+                return self.notFound(self,startcommand,dt,session,func) 
+            }
+            else
+            {
+                return self.notFound(self,startcommand,dt,session,func) 
+            }
+        }
+        else 
+            return self.notFound(self,startcommand,dt,session,func) 
         
     }
     async sendRes (e,d,des,func)
     {
         if(d)
         {
-            d.session=[{name:'state',value:des}]
+            if(d.session)
+                d.session.push({name:'state',value:des})
+            else
+                d.session=[{name:'state',value:des}]
+            //console.log('>>>>>>>>>>>>>>>>>',d.session)
             if(d.path)
             {
                 d.telegramFile = await this.storage._getFile(d,d.cache)

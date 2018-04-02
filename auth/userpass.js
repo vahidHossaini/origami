@@ -130,6 +130,7 @@ module.exports = class userpassClass
             return func({message:'auth005'})
         
         this.getRequires(msg,(arr)=>{
+            console.log('REQ',arr)
             for(var a of arr)
             {
                 if(!dt[a])
@@ -154,7 +155,16 @@ module.exports = class userpassClass
               dt.verify=true
               if(this.config.requireEmail || this.config.requireMobile)
                   dt.verify=false
-              global.db.Save(this.context,'orUsers',this.userKey,dt,func)
+              global.db.Save(this.context,'orUsers',this.userKey,dt,(e,d)=>{
+                    func(e,d)     
+                    if(e)
+                        return
+                    console.log('send',this.config.requireEmail)
+                    if(this.config.requireEmail)                    
+                        global.nt.Send(this.ntContext,'login',{username:dt.username,code:dt.emailcode,to:dt.email},(e,d)=>{
+                            
+                        })
+              })
             })
             
         })
@@ -254,7 +264,11 @@ module.exports = class userpassClass
                 updateobj.mobilecode=''
             }
             updateobj.verify=true 
-            global.db.Update(this.context,'orUsers',this.userKey,updateobj,(ee,dd)=>{                
+            global.db.Update(this.context,'orUsers',this.userKey,updateobj,(ee,dd)=>{ 
+                if(dd && dd.nModified)
+                {
+                    return func(null,{isDone:true})
+                }
                 return func(ee,dd)
             })  
         })
@@ -295,17 +309,19 @@ module.exports = class userpassClass
     getRequires(msg,func)
     {
         var arr=['username','password']
+            //console.log('REQ1',this.config)
         if(this.config.requireEmail)
             arr.push('email')
         if(this.config.requireMobile)
             arr.push('mobile')
-        for(var a of this.config.addItems)
-        {
-            if(a.required)
+        if(this.config.addItems)
+            for(var a of this.config.addItems)
             {
-                arr.push(a.name)
+                if(a.required)
+                {
+                    arr.push(a.name)
+                }
             }
-        }
         return func(arr)
     }
 

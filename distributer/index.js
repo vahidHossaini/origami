@@ -31,9 +31,13 @@ module.exports = class distributorService
       return route[domain][subDomain].func(data,func,route[domain][subDomain].self)
     }
     if(func)
+    {
+        console.log('Not Mach')
         return func({routeMessage:'Not Mach'})
+    }
     
     return new Promise(function (resolve, reject) {
+        console.log('Not Mach')
         reject({routeMessage:'Not Mach'})
     })
     

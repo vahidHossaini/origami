@@ -28,6 +28,7 @@ plugins/
 plugins/android.json
 plugins/ios.json
 www/
+samples/
 !www/ionicons
 $RECYCLE.BIN/
 

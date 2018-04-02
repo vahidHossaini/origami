@@ -35,7 +35,25 @@ function GetrandInt(n=12)
 }
 module.exports=class expr
 {
-    
+  checkCaptcha(data,req,seperate,func)
+  {
+      var cha=global.captcha[seperate[1]]
+      var valid=false
+      if(cha && cha[seperate[2]])
+      {
+          if(req.session.captcha)
+              if(data.captchacode==req.session.captcha)
+              {
+                  valid=true
+              } 
+        req.session.captcha= new captchapng(80,30,GetrandInt(5))
+      }
+      else
+      {
+          valid=true
+      }
+      return func(valid)
+  }
   checkAuthz(session,seperate,dist,func)
   {
       //superadmin
@@ -69,8 +87,12 @@ module.exports=class expr
     app.use(express.static(path.join(global.path, config['public'])));
     if(config.CrossDomain)
       app.use(function (req, res, next) {
+          console.log(config.CrossDomain,req.headers.origin)
         if ('OPTIONS' == req.method) {
-          res.header('Access-Control-Allow-Origin', config.CrossDomain);
+            if(config.CrossDomain=='*')
+                res.header('Access-Control-Allow-Origin', req.headers.origin);
+            else
+                res.header('Access-Control-Allow-Origin', config.CrossDomain);
           res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
           res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
           res.setHeader('Access-Control-Allow-Credentials', true);
@@ -85,6 +107,20 @@ module.exports=class expr
           secret: 'keyboard cat',
           cookie: { maxAge: 6000000 }
         })) 
+    
+    app.get('/captcha.png',(req, res)=>{   
+        var rand=GetrandInt(5)
+        var p = new captchapng(80,30,rand); // width,height,numeric captcha
+        p.color(0, 0, 0, 0);  // First color: background (red, green, blue, alpha)
+        p.color(80, 80, 80, 255);
+        req.session.captcha=rand
+        var img = p.getBase64();
+        var imgbase64 = new Buffer(img,'base64');
+        res.writeHead(200, {
+            'Content-Type': 'image/png'
+        });
+        res.end(imgbase64);
+    })  
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: true}));
 
@@ -110,7 +146,11 @@ module.exports=class expr
     app.use(function (req, res, next) {
       if(config.CrossDomain)
       {
-          res.header('Access-Control-Allow-Origin', config.CrossDomain);
+          
+            if(config.CrossDomain=='*')
+                res.header('Access-Control-Allow-Origin', req.headers.origin);
+            else
+                res.header('Access-Control-Allow-Origin', config.CrossDomain);
           res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
           res.setHeader('Access-Control-Allow-Credentials', true);
           res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
@@ -137,6 +177,10 @@ module.exports=class expr
           {
             body.data=req.body
           }
+          self.checkCaptcha(body.data,req,seperate,(cph)=>{
+            if(!cph)
+                return res.status(200).send({message:'glb003'})
+          
           dist.run(seperate[1],seperate[2],body,(ee,dd)=>{
             if(ee)
               return res.status(200).send(ee)
@@ -177,7 +221,8 @@ module.exports=class expr
               //console.log(dd)
             return res.status(200).send({isDone:true,data:dd})
           })
-        
+          
+          })
         
       }) 
     

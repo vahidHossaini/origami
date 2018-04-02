@@ -1,6 +1,7 @@
 var dist =new (require('./distributer/index'))()
 global.auth={}
 global.authz={}
+global.captcha={}
 module.exports = class origami
 {
   constructor(config)

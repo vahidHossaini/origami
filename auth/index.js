@@ -3,9 +3,16 @@ module.exports = class auth
 {
   constructor(config,dist)
   {
+      global.captcha.auth={
+         login:true ,
+         register:true,
+         forgetPassword:true
+      }
     if(config.userpass)
     {
       this.userpass=new (require('./userpass.js'))(config.userpass)
+    }
+    this.oauthDriver={
     }
     dist.addFunction('auth','login',this.login,this)
     dist.addFunction('auth','logout',this.logout,this)
@@ -19,7 +26,6 @@ module.exports = class auth
     dist.addFunction('auth','resetPassword',this.resetPassword,this)
     dist.addFunction('auth','verify',this.verify,this)
     dist.addFunction('auth','twoStep',this.twoStep,this)
-    
     global.auth['auth']={
         'login':'public',
         'islogin':'public',
@@ -31,8 +37,25 @@ module.exports = class auth
         'forgetPassword':'public'
         
         }
+    if(config.oauth)
+    {
+        for(var a of config.oauth)
+        {
+            this.createOauth(dist,a)
+            
+        }
+    }
     
     
+  }
+  createOauth(dist,config)
+  {
+    var driver=new (require('./oauth/telegram.js'))(dist,config)
+    dist.addFunction('auth',config.name,(msg,func,self)=>{
+         driver.login(msg,func,self)
+          
+    },this)
+      
   }
   islogin(msg,func,self)
   {
@@ -86,5 +109,5 @@ module.exports = class auth
   twoStep(msg,func,self)
   {
     self.userpass.twoStep(msg,func)
-  }
+  } 
 }

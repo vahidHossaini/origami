@@ -1,6 +1,6 @@
 {
   "name": "origamicore",
-  "version": "0.0.103",
+  "version": "0.0.104",
   "description": "origami core ",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   "dependencies": {
     "captchapng": "0.0.1",
     "cookie-parser": "^1.4.3",
+    "crypto-js": "^3.1.9-1",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
     "http": "0.0.0",
@@ -27,10 +28,14 @@
     "moment": "^2.21.0",
     "mongodb": "^3.0.2",
     "mysql": "^2.15.0",
+    "node-run-cmd": "^1.0.1",
     "node-telegram-bot-api": "^0.30.0",
+    "nodemailer": "^4.6.3",
     "odata-v4-mongodb": "^0.1.12",
     "odata-v4-mysql": "^0.1.1",
     "promise": "^8.0.1",
+    "pug": "^2.0.1",
+    "redis": "^2.8.0",
     "request": "^2.83.0",
     "uuid": "^3.2.1",
     "websocket": "^1.0.25"

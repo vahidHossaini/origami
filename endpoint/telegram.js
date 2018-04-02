@@ -26,16 +26,49 @@ module.exports=class telegram
     {
         //console.log('onInlineQuery')
         //console.log(msg)
+        this.getUserid(msg.from.id,msg.from,(session)=>{
+            var body={
+                session:session,
+                data:msg
+            }
+            this.dist.run(this.config.domain,'onInline',body,(ee,dd)=>{
+                var arr=[]
+                for(var a of dd.array)
+                {
+                    arr.push({
+                        title:a.title,
+                        id:a.id,
+                        message_text:a.message,
+                        reply_markup:{inline_keyboard:a.keys},
+                        type:a.type
+                    })
+                }
+                var dt={}
+                if(dd.header)
+                    dt.switch_pm_text=dd.header
+                if(dd.param)
+                    dt.switch_pm_parameter=dd.param
+                //delete data.array
+                this.bot.answerInlineQuery(msg.id,arr ,dt );
+               // this.sendResponse(ee,dd,msg)
+            })
+        })
     }
     onGetMessage(msg)
     {
-    //console.log(msg)
+       // console.log('onGetMessage')
+       // console.log(msg)
         this.getUserid(msg.from.id,msg.from,(session)=>{
             var body={
                 session:session,
                 data:msg
             }
             this.dist.run(this.config.domain,'onMessage',body,(ee,dd)=>{
+               // console.log('ee>>',ee)
+               // console.log('Error>>',dd)
+                if(ee)
+                    return this.bot.sendMessage(msg.from.id,ee.message)
+                
                 this.sendResponse(ee,dd,msg)
             })
         }) 
@@ -43,25 +76,48 @@ module.exports=class telegram
     //when button click
     onCallbackQuery(msg)
     { 
+        //console.log('onCallbackQuery')
+        //console.log(msg)
         this.getUserid(msg.from.id,msg.from,(session)=>{
             var body={
                 session:session,
                 data:msg
             }
             this.dist.run(this.config.domain,'onCallback',body,(ee,dd)=>{
+                if(ee)
+                    return this.bot.answerCallbackQuery(msg.id,{text:'error',show_alert:false})
+                if(dd.error)
+                    return this.bot.answerCallbackQuery(msg.id,{text:dd.error,show_alert:true})
                 this.sendResponse(ee,dd,msg)
+                this.bot.answerCallbackQuery(msg.id,{text:'ok',show_alert:false})
             })
         }) 
     }
     sendResponse(err,data,msg)
     {
+        //console.log('sendResponse',data)
+        if(err)
+            console.log('sendResponse',err)
         data.chatid=msg.from.id
         if(data.session)
             this.setSession(data.chatid,data.session)
-        if(!data.notDelete && msg.message)
+        if((!data.life || data.life=='delete')&& msg.message)
             this.bot.deleteMessage(data.chatid,msg.message.message_id) 
+         
         if(data.type=='inline')
-            this.sendInlineData(data)
+            if(data.life=='change')
+                this.changeMessage(data,msg.inline_message_id)
+            else
+                this.sendInlineData(data)
+    }
+    changeMessage(data,id)
+    {
+       // console.log('changeMessage',id,data)
+        if(!data.text)
+            return
+        var obj={inline_message_id:id}
+        obj.reply_markup={inline_keyboard:data.keys}
+        this.bot.editMessageText(data.text,obj)
     }
     sendInlineData(data)
     {
@@ -143,8 +199,9 @@ module.exports=class telegram
     {
         
     }
-    setSession(id,data)
+    async setSession(id,data)
     {
+        
         if(!session[id])
             session[id]={}
         for(var a of data)
