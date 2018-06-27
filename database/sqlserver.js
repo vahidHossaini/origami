@@ -112,6 +112,27 @@ module.exports = class mssqlService
     }
     return str
   }
+  convertToPersian(obj)
+  {
+      for(var a in obj)
+      {
+          if(typeof(obj[a])=='string' && obj[a].substr(0,4)=='base')
+          {
+              obj[a] = new Buffer(obj[a], 'base64');
+          }   
+         else if(Array.isArray(obj[a]))
+         {
+             for(var c of obj[a])
+             {
+                 this.convertToPersian(c)
+             }
+         }
+         else if(typeof(obj[a])=='object')
+             this.convertToPersian(obj[a])
+              //Buffer.from(c.id+":"+c.pass).toString('base64')
+      }
+       
+  }
   CreateSyntax(name,box,odata)
   {
     var where=''
@@ -124,6 +145,7 @@ module.exports = class mssqlService
     if(odata.$orderby)
     {
       var ors=odata.$orderby.split(',')
+      
       for(var a of ors)
       {
         var ord=a.split(' ')
@@ -140,7 +162,9 @@ module.exports = class mssqlService
     
     if(odata.$filter)
     {
+        
       filter = createFilter(odata.$filter);
+      this.convertToPersian(filter)
       for(var a=0;a<10;a++)
           filter.where=filter.where.replace('$'+a,'?')
       where+=filter.where

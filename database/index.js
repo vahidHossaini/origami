@@ -85,7 +85,15 @@ class globalDb
     }
     Search(context,table,query,odata,func)
     {
+        if(!odata)
+            odata={}
         return this.disc.run('database','search',{name:context,table:table,query:query,odata:odata},func)
+    }
+    SearchOne(context,table,query,odata,func)
+    {
+        if(!odata)
+            odata={}
+        return this.disc.run('database','searchOne',{name:context,table:table,query:query,odata:odata},func)
     }
     Save(context,table,key,data,func)
     {
@@ -99,6 +107,11 @@ class globalDb
     {
         return this.disc.run('database','update',{name:context,table:table,key:key,data:data},func)
     } 
+    Replicate(context,table,func)
+    {
+        return this.disc.run('database','replicate',{name:context,table:table},func)
+        
+    }
 }
 module.exports = class database
 {
@@ -110,11 +123,13 @@ module.exports = class database
         }
         var self=this
         dist.addFunction('database','search',this.Search,self)
+        dist.addFunction('database','searchOne',this.searchOne,self)
         dist.addFunction('database','save',this.Save,self)
         dist.addFunction('database','delete',this.Delete,self)
         dist.addFunction('database','config',this.Config,self)
         dist.addFunction('database','update',this.Update,self)
         dist.addFunction('database','transaction',this.Transaction,self)
+        dist.addFunction('database','replicate',this.Replicate,self)
         global.dist=dist
         global.db=new globalDb(dist)
     }
@@ -124,6 +139,21 @@ module.exports = class database
         if(!a.name || !dbs[a.name])
             return func({message:'connection not exist'})
         dbs[a.name].Search(a.table,a.query,a.odata,func)
+    }
+    searchOne(msg,func,self)
+    {
+        var a =msg   
+        if(!a.name || !dbs[a.name])
+            return func({message:'connection not exist'})
+        dbs[a.name].Search(a.table,a.query,a.odata,(ee,dd)=>{
+            if(dd.value.length)
+            {
+                return func(null,dd.value[0])
+            }
+            else{ 
+                return func(null,null)
+            }
+        })
     }
     Save(msg,func,self)
     {
@@ -145,6 +175,13 @@ module.exports = class database
         if(!a.name || !dbs[a.name])
             return func({message:'connection not exist'})
         dbs[a.name].Delete(a.table,a.key,a.data,func)
+    }
+    Replicate(msg,func,self)
+    {
+        var a =msg   
+        if(!a.name || !dbs[a.name])
+            return func({message:'connection not exist'})
+        dbs[a.name].Replicate(a.table,func)
     }
     Transaction(msg,func,self)
     {

@@ -1,7 +1,7 @@
  
 
 var createFilter = require('odata-v4-mongodb').createFilter;
-
+const assert = require("assert");
 
 module.exports = class mongodb
 {
@@ -9,7 +9,16 @@ module.exports = class mongodb
     {
       this.struct={}
         var self=this 
-        self.url='mongodb://'+config.username+':'+config.password+'@'+config.host+':27017/'+config.database
+        var port= '27017'
+        if(config.port)
+            port=config.port
+        
+        self.url='mongodb://'+config.host+':'+port+'/'+config.database
+        if(config.username)
+        {
+        self.url='mongodb://'+config.username+':'+config.password+'@'+config.host+':'+port+'/'+config.database
+            
+        }
         self.MongoClient= require('mongodb').MongoClient
         self.MongoClient.connect(self.url,{reconnectInterval: 10000}, function(err, client) {
             if(err)
@@ -17,6 +26,25 @@ module.exports = class mongodb
             self.connection=client.db(config.database);
             console.log('Connect to Mongodb')
         })
+        if(config.replicate)
+        {
+            var r=config.replicate
+            if(r.port)
+                port=r.port;
+                console.log('connecting to MongoClient Replication')
+                
+            var repurl='mongodb://'+r.host+':'+port+'/'+r.database+'?replicaSet='+r.name
+            if(r.username)
+            {
+                repurl='mongodb://'+r.username+':'+r.password+'@'+r.host+':'+port+'/'+r.database+'?replicaSet='+r.name
+            }
+            self.MongoClient.connect(repurl).then(client => {
+                self.dbReplication = client.db(r.database);
+                self.replicaColl={}
+                self.replicaReq={}
+                //console.log('connect to MongoClient Replication',self.dbReplication.collection('users').watch)
+            })
+        }
     }
     Config(structure)
     {
@@ -108,7 +136,7 @@ module.exports = class mongodb
         if(box.where)
         { 
             this.objectToWhere(box.where) 
-            console.log(box.where)
+            //console.log(box.where)
         }
         
         
@@ -167,6 +195,13 @@ module.exports = class mongodb
                 objwhere=filter
             }
         }
+        if(box.order)
+        {
+            //console.log('Getting order ----------------',box.order)
+            for(var a of box.order)
+              order.push(a)
+            //console.log('Getting order ----------------',order)
+        }
         if(order.length)
         {
             for(var a of order)
@@ -177,6 +212,8 @@ module.exports = class mongodb
                     objorder[a[0]]=-1
                 }
             }
+            //console.log('Getting order ----------------',objorder)
+            //console.log('Getting order ----------------',order)
         }
         if(select.length)
             objselect={}
@@ -231,8 +268,10 @@ module.exports = class mongodb
             pxtcount=pxtcount.find(syn.where,msel)
         }
         
-        if(syn.orders.length)
-            pxt=pxt.sort(sort)
+        if(syn.orders)
+            pxt=pxt.sort(syn.orders)
+        //if(syn.orders)
+        //    console.log('sort---------------',syn.orders)
         if(syn.skip)
         {
             pxt=pxt.skip(parseInt(syn.skip))            
@@ -308,9 +347,9 @@ module.exports = class mongodb
         { 
             where[a]={$eq:data[a]}
         }
-        console.log('mongodb')
-        console.log(where)
-        console.log(keys)
+        //console.log('mongodb')
+        //console.log(where)
+        //console.log(keys)
         var fsx=[]//sequelize.literal
         var sets=null
         var key = Object.keys(data)
@@ -392,5 +431,46 @@ module.exports = class mongodb
             }
         })
         
+    }
+    Delete(name,keys,data,func)
+    {
+        var self=this
+        var where={}
+        for(var a of keys)
+        { 
+            where[a]={$eq:data[a]}
+        }
+        var pxt=self.connection.collection(name).deleteMany(where,(err,dt)=>{
+            func(err,dt)
+        })
+    }
+    Replicate(table,func)
+    {
+        var self=this
+        if(self.replicaColl[table])
+        {
+            self.replicaReq[table].push(func)
+            return
+        }
+        let pipeline = [
+          {
+            $project: { 
+              //  documentKey: true ,
+                fullDocument:true,
+                ns:true,
+                updateDescription:true,
+                documentKey: true ,
+                operationType:true
+            }
+          }
+        ]
+        
+        self.replicaColl[table]=self.dbReplication.collection(table).watch(pipeline)
+        self.replicaReq[table]=[func]
+        self.replicaColl[table].on("change", (change)=> {
+         // console.log('======change',change);
+            for(var a of self.replicaReq[table])
+                a(change)
+        });
     }
 }

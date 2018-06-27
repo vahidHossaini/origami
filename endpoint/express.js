@@ -1,4 +1,4 @@
-
+var crypto = require('crypto');
 var url = require('url');
 var express = require('express');
 var cookieParser = require('cookie-parser');
@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var captchapng = require('captchapng');
 var path = require('path');
+var redisSession = require('node-redis-session');
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -77,17 +78,36 @@ module.exports=class expr
         return func(true)
     })
       
-  }  
+  } 
+    sendData(self,res,status,data)
+    {
+        var config=self.config
+        if( config.decodeUrl)
+        {
+            var mykey = crypto.createCipher(config.decodeUrl.algorithm, config.decodeUrl.passwpord);
+            var mystr = mykey.update(JSON.stringify(data), 'utf8', 'hex')
+            mystr += mykey.final('hex');
+            return res.status(status).send(mystr)
+        }
+        else
+        {
+            return res.status(status).send(data)
+            
+        }
+    }
   constructor(config,dist)
   {
       var self=this
+      self.config=config
     this.dist=dist
     var app = express();
     app.set('trust proxy', 1)
     app.use(express.static(path.join(global.path, config['public'])));
+    console.log('public1--------------------',config['public1'])
+    if(config['public1'])
+        app.use(express.static(config['public1']));
     if(config.CrossDomain)
       app.use(function (req, res, next) {
-          console.log(config.CrossDomain,req.headers.origin)
         if ('OPTIONS' == req.method) {
             if(config.CrossDomain=='*')
                 res.header('Access-Control-Allow-Origin', req.headers.origin);
@@ -102,11 +122,20 @@ module.exports=class expr
         {
           next()
         }
-      }); 
+      });
+    
+    if(config.sessionManager)
+    {
+        app.use(cookieParser());
+        app.use(redisSession());
+    }    
+    else
+    {    
       app.use(session({
           secret: 'keyboard cat',
           cookie: { maxAge: 6000000 }
         })) 
+    }    
     
     app.get('/captcha.png',(req, res)=>{   
         var rand=GetrandInt(5)
@@ -121,14 +150,40 @@ module.exports=class expr
         });
         res.end(imgbase64);
     })  
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({extended: true}));
+    if(config.decodeUrl)
+    {
+//var mystr = mykey.update('{"d":"test","s":"test1","a":12}', 'utf8', 'hex')
+//mystr += mykey.final('hex');
 
-
-    if(config.bodyLimit)
-        app.use(bodyParser.json({limit: config.bodyLimit+'mb'}));
-    if(config.urlLimit)
-        app.use(bodyParser.urlencoded({limit: config.urlLimit+'mb'}));
+        app.use(function (req, res, next){
+            var url_parts = url.parse(req.url, true); 
+            var path=url_parts.pathname.substr(1)
+            try{
+                var mykey = crypto.createCipher(config.decodeUrl.algorithm, config.decodeUrl.passwpord);
+                let mystr = mykey.update(path, 'hex','utf8' )
+                mystr += mykey.final('utf8');
+                let obj=JSON.parse(mystr)
+                req.url='/'+obj.d+'/'+obj.s
+                req.body=obj
+                next()
+                
+            }catch(exp){
+                return res.status(200).send(Getrand(30))
+                
+                //console.log(exp)
+            }
+        })
+        
+    }
+    else{
+        app.use(bodyParser.json());
+        app.use(bodyParser.urlencoded({extended: true}));
+        if(config.bodyLimit)
+            app.use(bodyParser.json({limit: config.bodyLimit*1026*1024}));
+        if(config.urlLimit)
+            app.use(bodyParser.urlencoded({limit: config.urlLimit*1026*1024}));
+        
+    }
     if(config.http)
     {
         var http = require('http');
@@ -144,6 +199,9 @@ module.exports=class expr
 
     }
     app.use(function (req, res, next) {
+        //console.log('BODY',req.body)
+        console.log('URL',req.url)
+        //console.log('method',req.method)
       if(config.CrossDomain)
       {
           
@@ -157,14 +215,17 @@ module.exports=class expr
       }
       var url_parts = url.parse(req.url, true); 
       var seperate = url_parts.pathname.split('/')
+        //self.sendData(self,res,)
       if(!seperate || seperate.length!=3)
-        return res.status(200).send({message:'glb001'})
+        //return res.status(200).send({message:'glb001'})
+        return self.sendData(self,res,200,{message:'glb001'})
       var session = req.session;
       
       
       self.checkAuthz(session,seperate,dist,(isAuthz)=>{
           if(!isAuthz)
-            return res.status(200).send({message:'glb002'})
+            //return res.status(200).send({message:'glb002'})
+            return self.sendData(self,res,200,{message:'glb002'})
               
           var body={
             session:session,
@@ -172,6 +233,10 @@ module.exports=class expr
           if(req.method=='GET')
           {
             body.data = url_parts.query;
+            if(req.body)
+                for(var a in req.body){
+                   body.data[a]=req.body[a] 
+                }
           }
           else
           {
@@ -179,12 +244,13 @@ module.exports=class expr
           }
           self.checkCaptcha(body.data,req,seperate,(cph)=>{
             if(!cph)
-                return res.status(200).send({message:'glb003'})
+                //return res.status(200).send({message:'glb003'})
+                return self.sendData(self,res,200,{message:'glb003'})
           
           dist.run(seperate[1],seperate[2],body,(ee,dd)=>{
             if(ee)
-              return res.status(200).send(ee)
-              //console.log('DATA1')
+              //return res.status(200).send(ee)
+              return self.sendData(self,res,200,ee)
             if(dd.session && dd.session.length)
             {
               for(var ses of dd.session)
@@ -196,30 +262,26 @@ module.exports=class expr
                 }
               }
               delete dd.session
-                //console.log('MYsession')
-                //console.log(dd.session)
             }
-              //console.log('DATA2')
             if(dd.redirect)
             {
               return res.redirect(dd.redirect)
             }
-              //console.log('DATA3')
             if(dd.directText)
-              return res.status(200).send(dd.directText);
+              //return res.status(200).send(dd.directText);
+              return self.sendData(self,res,200,dd.directText)
               
-              //console.log('DATA4')
             if(dd.directFileDownload)
             {
               fs.readFile(data.directFileDownload,function(err, data1){
-                  return  res.status(200).end(data1);
+                  //return  res.status(200).end(data1);
+                  return  self.sendData(self,res,200,data1)
               })
               return
             }
 
-              //console.log('DATA')
-              //console.log(dd)
-            return res.status(200).send({isDone:true,data:dd})
+            //return res.status(200).send({isDone:true,data:dd})
+            return self.sendData(self,res,200,{isDone:true,data:dd})
           })
           
           })

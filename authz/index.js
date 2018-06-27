@@ -4,6 +4,9 @@ module.exports = class authz
   constructor(config,dist)
   {
     this.context=config.context
+    
+    
+    
     this.roleKey=['name']
     this.aclKey=['userid']
     dist.addFunction('authz','getRoles',this.getRoles,this)

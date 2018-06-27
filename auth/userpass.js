@@ -62,13 +62,22 @@ module.exports = class userpassClass
           
           return
       }
+      if(this.config.added)
+          for(let a of this.config.added)
+          {
+              if(a.sessionable)
+              {
+                session.push({name:a.name,value:user[a.name]}) 
+                  
+              }
+          }
       global.db.Search(this.context,'acl',{where:{userid:user.userid}},{},(e1,d1)=>{
             if(d1 && d1.value.length)
                 session.push({name:'roles',value:d1.value[0].roles}) 
             else
                 session.push({name:'roles',value:{}}) 
-          console.log('session')
-          console.log(session)
+          //console.log('session')
+         // console.log(session)
         return func(null,{isDone:true,session:session})
       })
     })
@@ -88,7 +97,11 @@ module.exports = class userpassClass
   getusers(msg,func)
   {
     var dt=msg.data
-      global.db.Search(this.context,'orUsers',{select:['username','userid','active','verify']},dt,(e,d)=>{
+    var select =['username','userid','active','verify']
+    if(this.config.added)
+        for(var a of this.config.added)
+            select.push(a.name)
+      global.db.Search(this.context,'orUsers',{select:select},dt,(e,d)=>{
            
             func(e,d)
       })
@@ -130,7 +143,7 @@ module.exports = class userpassClass
             return func({message:'auth005'})
         
         this.getRequires(msg,(arr)=>{
-            console.log('REQ',arr)
+            //console.log('REQ',arr)
             for(var a of arr)
             {
                 if(!dt[a])
@@ -159,7 +172,7 @@ module.exports = class userpassClass
                     func(e,d)     
                     if(e)
                         return
-                    console.log('send',this.config.requireEmail)
+                    //console.log('send',this.config.requireEmail)
                     if(this.config.requireEmail)                    
                         global.nt.Send(this.ntContext,'login',{username:dt.username,code:dt.emailcode,to:dt.email},(e,d)=>{
                             
@@ -219,7 +232,7 @@ module.exports = class userpassClass
         if(!dt.username ||!dt.code || !dt.newPassword)
             return func({message:'app001'})
         global.db.Search(this.context,'orUsers',{where:{$and:[{username:dt.username},{forgetPassword:dt.code}]}},{},(e,d)=>{
-        console.log(d)
+        //console.log(d)
             if(!d.value.length)
             {
                 return func({message:'auth007'})
@@ -279,7 +292,7 @@ module.exports = class userpassClass
         if(!dt.username ||!dt.code )
             return func({message:'app001'})
         global.db.Search(this.context,'orUsers',{where:{$and:[{username:dt.username},{twoStep:dt.code}]}},{},(e,d)=>{
-        console.log(d)
+        //console.log(d)
             if(!d.value.length)
             {
                 return func({message:'auth007'})

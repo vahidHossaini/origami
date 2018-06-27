@@ -12,7 +12,8 @@ module.exports = class mysqlService
       host     : config.host,
       user     : config.username,
       password : config.password,
-      database : config.database
+      database : config.database,
+        timezone : '+00:00'
     });
     this.connection.connect((err)=>{
         console.log(err)
@@ -116,6 +117,22 @@ module.exports = class mysqlService
     }
     return str
   }
+  convertToPersian(obj)
+  {
+      if(typeof(obj)!='string')
+          return obj
+     while(true)
+      {
+          var find=obj.indexOf('base64')
+    //console.log('convertToPersian0',find)
+          if(find==-1)
+              break  
+          obj=  new Buffer(obj.substr(6), 'base64') +''
+      }
+    //console.log('convertToPersian3',obj)
+      return obj 
+       
+  }
   CreateSyntax(name,box,odata)
   {
     var where=''
@@ -145,9 +162,13 @@ module.exports = class mysqlService
     if(odata.$filter)
     {
       filter = createFilter(odata.$filter);
+      
       for(var a=0;a<10;a++)
           filter.where=filter.where.replace('$'+a,'?')
       where+=filter.where
+      console.log('filter--------',filter)
+      for(var x =0;x<filter.parameters.length;x++)
+          filter.parameters[x]= this.convertToPersian(filter.parameters[x])
       param=param.concat(filter.parameters)
       
     }
@@ -240,14 +261,6 @@ module.exports = class mysqlService
       count+=' where '+ where + ' '
     }
 
-    if(order.length)
-        syntax+=' order by '
-    for(var a of order)
-    {
-      syntax+= a[0]+' ,'
-    }
-    if(order.length)
-      syntax=syntax.substr(syntax.length-1)
     
     if(selectGroup.length)
     {
@@ -256,6 +269,22 @@ module.exports = class mysqlService
             syntax+=a+' ,'
         syntax=syntax.substr(0,syntax.length-1)
     }
+    
+    
+    if(order.length)
+        syntax+=' order by '
+    for(var a of order)
+    {
+        if(a[1].toLowerCase()=='desc') 
+            syntax+= a[0]+' desc ,'
+        else
+            syntax+= a[0]+' ,'
+    }
+    if(order.length)
+      syntax=syntax.substr(0,syntax.length-1)
+    
+    
+    
     if(odata.$top)
       syntax+=' LIMIT '+odata.$top
     if(odata.$skip)

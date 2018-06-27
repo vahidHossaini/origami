@@ -3,11 +3,14 @@ module.exports = class auth
 {
   constructor(config,dist)
   {
-      global.captcha.auth={
-         login:true ,
-         register:true,
-         forgetPassword:true
+      global.captcha.auth={ 
       }
+    if(config.userpass.loginCaptcha)  
+        global.captcha.auth.login=true
+    if(config.userpass.registerCaptcha)  
+        global.captcha.auth.register=true
+    if(config.userpass.forgetPasswordCaptcha)  
+        global.captcha.auth.forgetPassword=true
     if(config.userpass)
     {
       this.userpass=new (require('./userpass.js'))(config.userpass)

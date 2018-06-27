@@ -24,10 +24,76 @@ module.exports = class baseclass
         String.prototype.replaceAt=function(index, replacement) {
           return this.substr(0, index) + replacement+ this.substr(index + replacement.length);
         }
-
+        global.round=function(number,p=10){
+            return Math.round(number*p)/p
+        }
         global.rand= function (min, max) {
           return Math.floor(Math.random() * (max - min)) + min;
         }
+        global.randString=function Getrand(n=12)
+        {
+            var str=''
+            var sr='1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
+            for(var a=0;a<n;a++)
+            {
+                var i= global.rand(0,sr.length)
+                str+=sr[i]
+            }
+            return str
+        }
+        global.randNumber=function Getrand(n=12)
+        {
+            var str=''
+            var sr='1234567890'
+            for(var a=0;a<n;a++)
+            {
+                var i= global.rand(0,sr.length)
+                str+=sr[i]
+            }
+            return str
+        }
         global.config={auth:{},upload:{},captcha:{}}
+        
+        global.addMin=function (date,min)
+        {
+            return new Date(date.getTime()+1000*60*min) 
+        }
+        global.updateArray=function(arr,key,obj)
+        {
+            for(var a=0;a<arr.length;a++)
+            {
+                var dt=arr[a]
+                let ism=true
+                for(var b of key)
+                {
+                    if(dt[b]!=obj[b])
+                        ism=false
+                }
+                if(ism)
+                {
+                    arr[a]=obj
+                    return 
+                }
+            }
+            arr.push(obj)
+        }
+        global.deleteArray=function(arr,key,obj)
+        {
+            for(var a=0;a<arr.length;a++)
+            {
+                var dt=arr[a]
+                let ism=true
+                for(var b of key)
+                {
+                    if(dt[b]!=obj[b])
+                        ism=false
+                }
+                if(ism)
+                {
+                    arr.splice(a,1)
+                    return 
+                }
+            } 
+        }
   }
 }

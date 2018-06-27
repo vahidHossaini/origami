@@ -50,7 +50,7 @@ module.exports = class sessionManagerService{
                     delete olddt[a.name]
             }
             //console.log('data -----------------------',msg)
-            //console.log('data -----------------------',olddt)
+          //  console.log('data -----------------------',olddt)
             self.redis.set(key,JSON.stringify(olddt),function(err, result){
                 if(!self.exp)
                     self.exp = 360000000
