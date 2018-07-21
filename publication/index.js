@@ -18,6 +18,7 @@ module.exports = class publication
     }
     async updateChanges(data)
     {
+        console.log('updateChanges------->',data)
         var id=data.documentKey._id 
         //ns: { db: 'sht_dev', coll: 'users' }
         if(!data.ns)

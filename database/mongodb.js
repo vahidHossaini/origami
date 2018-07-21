@@ -20,7 +20,7 @@ module.exports = class mongodb
             
         }
         self.MongoClient= require('mongodb').MongoClient
-        self.MongoClient.connect(self.url,{reconnectInterval: 10000}, function(err, client) {
+        self.MongoClient.connect(self.url,{reconnectInterval: 10000,useNewUrlParser: true}, function(err, client) {
             if(err)
                return console.log('Failed Connect to Mongodb')
             self.connection=client.db(config.database);
@@ -31,18 +31,22 @@ module.exports = class mongodb
             var r=config.replicate
             if(r.port)
                 port=r.port;
-                console.log('connecting to MongoClient Replication')
+                console.log('connecting to MongoClient Replication  ===> '+r.host+':'+port)
                 
             var repurl='mongodb://'+r.host+':'+port+'/'+r.database+'?replicaSet='+r.name
             if(r.username)
             {
                 repurl='mongodb://'+r.username+':'+r.password+'@'+r.host+':'+port+'/'+r.database+'?replicaSet='+r.name
             }
+            console.log('////',repurl)
             self.MongoClient.connect(repurl).then(client => {
+            console.log('////',client)
                 self.dbReplication = client.db(r.database);
                 self.replicaColl={}
                 self.replicaReq={}
                 //console.log('connect to MongoClient Replication',self.dbReplication.collection('users').watch)
+            }).catch((exp)=>{
+                console.log('e : ',exp)
             })
         }
     }
@@ -352,6 +356,7 @@ module.exports = class mongodb
         //console.log(keys)
         var fsx=[]//sequelize.literal
         var sets=null
+        var arr=null
         var key = Object.keys(data)
         for(var a of key)
         {
@@ -364,6 +369,85 @@ module.exports = class mongodb
                 }
                 
                 fsx.push('doc.'+a+'='+fd)
+            }
+            if(data[a] &&  data[a]['$array'])
+            {
+                var array=data[a]['$array']
+                if(!array)
+                {
+                    var field =array.field 
+                    var subfield =array.subfield
+                    var func='$push'
+                    var val 
+                    if(array.unique)
+                        func='$addToSet'
+                    
+                    if(array.func=='add')
+                    {
+                        func='$push'
+                        if(Array.isArray(val))
+                        {
+                            val={$each:val}
+                        }
+                    }   
+                    
+                    if(array.func=='delete')
+                    {
+                        if(array.where)
+                        {
+                            if(array.where=='first')
+                            {
+                                func='$pop'
+                                val=-1
+                            }
+                            else if(array.where=='last')
+                            {
+                                func='$pop'
+                                val=1
+                            }
+                            else
+                            {
+                                func='$pull'
+                                val=array.where
+                            }                            
+                        }
+                        else
+                        {
+                            func='$pullAll'  
+                        }
+                    }
+                    if(array.func=='update')
+                    {
+                        if(array.where)
+                        {
+                            if(array.where=='first')
+                            {
+                                if(!sets)sets={}
+                                var f=field+'.$'
+                                if(subfield)
+                                    f+='.'+subfield
+                                sets[subfield]=val
+                                func=null
+                            }
+                            if(array.where=='all')
+                            {
+                                if(!sets)sets={}
+                                var f=field+'.$[]'
+                                if(subfield)
+                                    f+='.'+subfield
+                                sets[subfield]=val
+                                func=null
+                            }
+                            
+                        }
+                        
+                    }
+                    if(func)
+                    {
+                        arr={}
+                        arr[func]=val
+                    }
+                }
             }
             else
             {
@@ -378,9 +462,21 @@ module.exports = class mongodb
       // console.log(fstr)
        
         var myfunct=eval(fstr)
-       if(sets)
-       {
-            me.connection.collection(name).updateMany(where,{$set:sets},function(err,res){ 
+        if(sets || arr)
+        {
+            var obj={}
+            if(sets)
+            {
+                obj.$set=sets
+            }
+            if(arr)
+            {
+                for(var x in arr)
+                {
+                    obj[x]=arr[x]
+                }
+            }
+            me.connection.collection(name).updateMany(where,obj,function(err,res){ 
                 if(fsx.length)
                 {
                     me.connection.collection(name).find(where).forEach(myfunct,function(){func(err,res)});
@@ -392,12 +488,12 @@ module.exports = class mongodb
                           
             })
            
-       }
-       else
-       {
-           global.Log(fstr,where)
+        }
+        else
+        {
+            global.Log(fstr,where)
             me.connection.collection(name).find(where).forEach(myfunct,function(){func(null, {})});           
-       }
+        }
     }
     Insert(name,keys,data,func)
     {

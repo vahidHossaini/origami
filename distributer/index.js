@@ -1,6 +1,8 @@
 var route={}
 var structs={}
 var Promise = require('promise');
+var servers={} 
+var client=require('./remote')
 module.exports = class distributorService
 {
   constractor()
@@ -85,8 +87,65 @@ module.exports = class distributorService
         }
         return true
     }
+    
+   
+    setServer(domain,srv)
+    {
+        if(!servers[domain])
+            servers[domain]={srvs:[],c:0}
+        for(var b of srv)
+        {
+            var cli=new client()
+            cli.init(b)
+            //this.createSocket(servers[domain].srvs,b)
+            servers[domain].srvs.push(cli)
+        }
+        
+    }
+    
   run(domain,subDomain,data,func)
   {   
+  //
+    //console.log('>>>>>>>>>>>>>>yyyy',servers[domain])
+    if(servers[domain])
+    {
+            //console.log('1111>>>>>>>>>>>>>>server',servers[domain].srvs[servers[domain].c].send)
+            console.log(func)
+        if(!func)
+        {
+            var pr= servers[domain].srvs[servers[domain].c].send({
+                domain:domain,
+                service:subDomain,
+                param:data
+            })
+    //console.log('>>>>>>>>>>>>>>pppppppppp',pr)
+            servers[domain].c++
+            if(servers[domain].c>=servers[domain].srvs.length)
+            {
+                servers[domain].c=0
+            }
+            return pr
+        }
+        var prm = servers[domain].srvs[servers[domain].c].send({
+            domain:domain,
+            service:subDomain,
+            param:data
+        }).then((dt)=>{
+            console.log('>>>>>>>>>>>>>>xxxxxx   ',dt)
+            func(null,dt)
+        }).catch((err)=>{
+            console.log('>>>>>>>>>>>>>>eeeeee   ',err)
+            func(err,null)
+            
+        })
+        
+        servers[domain].c++
+        if(servers[domain].c>=servers[domain].srvs.length)
+        {
+            servers[domain].c=0
+        }
+        return
+    }
     if(route[domain] && route[domain][subDomain])
     {
         var self=route[domain][subDomain].self

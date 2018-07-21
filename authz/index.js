@@ -9,43 +9,55 @@ module.exports = class authz
     
     this.roleKey=['name']
     this.aclKey=['userid']
-    dist.addFunction('authz','getRoles',this.getRoles,this)
-    dist.addFunction('authz','saveRoles',this.saveRoles,this)
-    dist.addFunction('authz','deleteRoles',this.deleteRoles,this)
-    dist.addFunction('authz','checkRole',this.checkRole,this)
-    dist.addFunction('authz','setAccess',this.setAccess,this)
-    dist.addFunction('authz','getAccess',this.getAccess,this)
-    dist.addFunction('authz','getUiAccess',this.getUiAccess,this)
+    
+    if(config.staticRole)
+    {
+        this.roles=config.staticRole
+        dist.addFunction('authz','checkRole',this.staticCheck,this)
+        
+    }
+    else
+    {
+        dist.addFunction('authz','getRoles',this.getRoles,this)
+        dist.addFunction('authz','saveRoles',this.saveRoles,this)
+        dist.addFunction('authz','deleteRoles',this.deleteRoles,this)
+        dist.addFunction('authz','checkRole',this.checkRole,this)
+        dist.addFunction('authz','setAccess',this.setAccess,this)
+        dist.addFunction('authz','getAccess',this.getAccess,this)
+        dist.addFunction('authz','getUiAccess',this.getUiAccess,this)
+         global.db.Config(config.context,[
+            {
+                name:'role',
+                tableName:'role',
+                cols:{
+                    name:{isKey:true,type:'string',isForce:true},
+                    access:{isKey:true,type:'Json',isForce:true},
+                    ui:{isKey:true,type:'Json',isForce:true},
+                }
+            },
+            {
+                name:'acl',
+                tableName:'acl',
+                cols:{
+                    userid:{isKey:true,type:'string',isForce:true},
+                    roles:{isKey:true,type:'Json',isForce:true}, 
+                }
+            },
+            
+        ],(e,d)=>{
+            
+          //console.log('Completed')
+            this.loadRole(this)
+            
+        })
+    }
+    
     
     global.auth['authz']={ 
         'getUiAccess':'login'
         
         }
-    global.db.Config(config.context,[
-        {
-            name:'role',
-            tableName:'role',
-            cols:{
-                name:{isKey:true,type:'string',isForce:true},
-                access:{isKey:true,type:'Json',isForce:true},
-                ui:{isKey:true,type:'Json',isForce:true},
-            }
-        },
-        {
-            name:'acl',
-            tableName:'acl',
-            cols:{
-                userid:{isKey:true,type:'string',isForce:true},
-                roles:{isKey:true,type:'Json',isForce:true}, 
-            }
-        },
-        
-    ],(e,d)=>{
-        
-      console.log('Completed')
-        this.loadRole(this)
-        
-    })
+   
   }
   //private
   loadRole(self)
@@ -88,13 +100,38 @@ module.exports = class authz
           return func(e,d)
       })
   }
+  staticCheck(msg,func,self)
+  {
+    var dt=msg.data
+    var session=msg.session
+    //console.log('msg----------------',msg)
+    //console.log('auth----------------',global.auth)
+    if(!global.auth[dt.domain] || !global.auth[dt.domain][dt.subDomain])
+        return func(null,{i:false})
+    var r=global.auth[dt.domain][dt.subDomain]
+    if(r=='public')
+        return func(null,{i:true})
+    if(!session.userid)
+        return func(null,{i:false})
+    if(session.userid && r=='login')
+        return func(null,{i:true})
+    if(session.role)
+    {
+        if(session.role & r)
+        {
+        return func(null,{i:true})
+            
+        }
+    }
+    return func(null,{i:false})
+  }
   checkRole(msg,func,self)
   {
     var dt=msg.data
     var session=msg.session
-    console.log('roles')
-    console.log(dt)
-    console.log(session.roles)
+    //console.log('roles')
+    //console.log(dt)
+    //console.log(session.roles)
     if(!session || !session.roles)
         return func({})
     var url=dt.domain+'/'+dt.subDomain

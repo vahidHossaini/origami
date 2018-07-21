@@ -39,6 +39,8 @@ module.exports = class nofifyWebService
                 option[self.config.titleField]=tmp.title
             if(self.config.htmlField)
                 option[self.config.htmlField]=tmp.html
+                
+            
         console.log('send message',option)
             this.connection.post(this.config.sendUrl,option, function(res){
                 res.setEncoding('utf8');

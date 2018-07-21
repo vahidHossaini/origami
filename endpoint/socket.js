@@ -20,8 +20,13 @@ module.exports=class socket
         if(config.publication)
         {
             this.pubcon=config.publication
-            dist.run('publication','connect',{id:this.pubcon.id},(ee,dd)=>{
+            dist.run('publication','connect',{id:this.pubcon.id+process.pid},(ee,dd)=>{
                 //console.log('publication',ee)
+                if(ee)
+                {
+                    console.log('Replication is not running')
+                    return
+                }
                 var key=userIds[dd.user]
                 if(key && connections[key])
                     this.response(ee,dd,connections[key],key )
@@ -30,12 +35,12 @@ module.exports=class socket
         }
         
         var mode=require(config.mode);
-        var server = mode.createServer(function(request, response) {
+        var server = mode.createServer((request, response)=> {
             response.writeHead(404);
             response.end();
             
         });
-        server.listen(config.port, function() {
+        server.listen(config.port, ()=> {
             console.log(  'Socket Server is listening on port '+config.port+' '+config.mode);
         });
         var wsServer = new WebSocketServer({
@@ -52,7 +57,7 @@ module.exports=class socket
                  if(config.protocol=='echo-protocol')
                  {
                     connection.on('message', (message)=> {
-                        this.echoProtocolMessage(message,connection,request.key)
+                        this.echoProtocolMessage(message,connection,request.key,dist)
                     })
                  }
                
@@ -67,7 +72,7 @@ module.exports=class socket
             }
         })
     }
-    echoProtocolMessage(message,connection,key)
+   async echoProtocolMessage(message,connection,key,dist)
     {
         //console.log(request.key)  
         if (message.type === 'utf8')
@@ -97,8 +102,7 @@ module.exports=class socket
                 {
                     key=session[key]
                 }
-                this.getSession(key,(session)=>{
-                    //console.log('Session',session)
+                this.getSession(key,async(session)=>{
                     var body={ 
                         data:data.param
                     }
@@ -106,9 +110,12 @@ module.exports=class socket
                         body.data={}
                     if(session)
                     {
-                        //console.log('befor-----',session)
                         body.session=session.session
                     }
+                    var dt =await dist.run('authz','checkRole',{data:{domain:data.domain,subDomain:data.service},session:session.session})
+                    if(!dt.i)
+                       return connection.sendUTF(JSON.stringify({error:'access'}));
+                        
                     this.dist.run(data.domain,data.service,body,(ee,dd)=>{ 
                         this.response(ee,dd,connection,key,data.id)
                     })
@@ -128,13 +135,9 @@ module.exports=class socket
     }
     getSession(key,func)
     {
-            //console.log('Session',key)
         if(!key)
             return func({})
         global.sm.get(this.sm,key,(e,d)=>{
-            
-           // console.log('Session',e)
-          //  console.log('Session',d)
             return func(d)
         })
     }
@@ -162,27 +165,23 @@ module.exports=class socket
     }
     response(err,data,connection,key,id)
     {
-        //console.log(err)
-        //console.log(data)
         if(!err && data)
             if(data.session)
                 for(var a of data.session)
                 {
-                    //console.log('session is ---->',a)
                     if(a.name=='userid')
                     {
                         if( a.value)
                             userIds[a.value]=key
                         else
                             delete userIds[a.value]
-                    //console.log('session is ---->',userIds)
                     }
                 }
         if(data &&  data.session)
         { 
             this.setSession(key,data.session,()=>{})
         }
-        //console.log(data)
+        //console.log('--->',data)
         if(data)
             delete data.session 
         var obj={

@@ -1,6 +1,6 @@
 {
   "name": "origamicore",
-  "version": "0.0.107",
+  "version": "1.0.0",
   "description": "origami core ",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "binary-file": "^0.2.1",
     "captchapng": "0.0.1",
     "connect-redis": "^3.3.3",
     "cookie-parser": "^1.4.3",

@@ -1,9 +1,24 @@
 var jalaali = require('jalaali-js')
 module.exports = class baseclass
 {
-  constructor(config)
-  { 
-        global.web=new (require('./web'))()
+    constructor(config)
+    { 
+        this.setup() 
+        
+    }
+     
+  setup()
+  {
+      global.trace=function trace(s) {
+                    const orig = Error.prepareStackTrace;
+                    Error.prepareStackTrace = (_, stack) => stack;
+                    const err = new Error();
+                    Error.captureStackTrace(err, arguments.callee);
+                    Error.prepareStackTrace = orig;
+                    const callee = err.stack[0];
+                    process.stdout.write(`${path.relative(process.cwd(), callee.getFileName())}:${callee.getLineNumber()}: ${s}\n`);
+                }
+      global.web=new (require('./web'))()
         global.Log=function(title,err){
           console.log('-------'+title);
           console.log(err);
@@ -95,5 +110,6 @@ module.exports = class baseclass
                 }
             } 
         }
+  
   }
 }

@@ -117,6 +117,11 @@ module.exports = class database
 {
     constructor(config,dist)
     {
+        global.db=new globalDb(dist)
+        global.dist=dist
+        
+        if(config.servers)
+            return
         for(var a of config.connection)
         {
             dbs[a.name]=new (require('./'+a.type))(a,dist)
@@ -130,8 +135,6 @@ module.exports = class database
         dist.addFunction('database','update',this.Update,self)
         dist.addFunction('database','transaction',this.Transaction,self)
         dist.addFunction('database','replicate',this.Replicate,self)
-        global.dist=dist
-        global.db=new globalDb(dist)
     }
     Search(msg,func,self)
     {

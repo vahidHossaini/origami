@@ -39,9 +39,12 @@ module.exports = class services
         else
             global.auth[config.domain][x.name]=x.role
     }
-    
-    var structure=require(config.structure) 
-    dist.setClass(config.domain,structure)
+    if(config.structure)
+    {
+        var structure=require(config.structure) 
+        dist.setClass(config.domain,structure)
+        
+    }
   }
   
     SetQueue(msg,func,self,domain)
