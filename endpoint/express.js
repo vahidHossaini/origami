@@ -102,7 +102,7 @@ module.exports=class expr
     var app = express();
     app.set('trust proxy', 1)
     app.use(express.static(path.join(global.path, config['public'])));
-    console.log('public1--------------------',config['public1'])
+    //console.log('public1--------------------',config['public1'])
     if(config['public1'])
         app.use(express.static(config['public1']));
     if(config.CrossDomain)
@@ -139,6 +139,8 @@ module.exports=class expr
     else
     {    
       app.use(session({
+          resave: true,
+          saveUninitialized: true,
           secret: 'keyboard cat',
           cookie: { maxAge: 6000000 }
         })) 

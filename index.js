@@ -3,6 +3,7 @@ var remotes={}
 global.auth={}
 global.authz={}
 global.captcha={} 
+var fs=require('fs')
 module.exports = class origami
 {
     constructor(config,sa)
@@ -50,5 +51,10 @@ module.exports = class origami
             } 
         }
         return p
+    }
+    getVersion()
+    {
+        var pjson = require('./package.json');
+        return pjson.version
     }
 }
