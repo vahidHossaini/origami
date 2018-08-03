@@ -1,5 +1,5 @@
-var memory= require("C:\\project\\OrigamiCore\\shareMemory\\index.js").Client
-//var memory= require("sharememory").Client
+//var memory= require("C:\\project\\OrigamiCore\\shareMemory\\index.js").Client
+var memory= require("sharememory").Client
 const BinaryFile = require('binary-file');
 var fs=require('fs')
 const fsPromises = require('fs').promises;

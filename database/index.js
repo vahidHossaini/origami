@@ -136,6 +136,25 @@ module.exports = class database
         dist.addFunction('database','transaction',this.Transaction,self)
         dist.addFunction('database','replicate',this.Replicate,self)
     }
+    getPackages(config)
+    {
+        var p=[]
+        for(var a of config.connection)
+        {
+            if(a.type=='mongodb')
+            {
+                p.push('odata-v4-mongodb')
+                p.push('assert')
+                p.push('mongodb')
+            }
+            if(a.type=='mysql')
+            {
+                p.push('odata-v4-mysql')
+                p.push('mysql') 
+            }
+        }
+        return p
+    }
     Search(msg,func,self)
     {
         var a =msg   

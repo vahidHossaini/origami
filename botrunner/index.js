@@ -1,6 +1,6 @@
 var fs=require('fs')
 var url = require('url');
-var Promise = require('promise');
+//var Promise = require('promise');
 var TelegramBot = require('node-telegram-bot-api');
 var teType=require('../enums/type.js')
 class botStorage{

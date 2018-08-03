@@ -8,7 +8,18 @@ module.exports = class sessionManagerService{
         {
             this.exp=config.expireTime*60 
         }
+        var op={port:config.port,ip:config.ip}
+        if(config.pass)
+            op.password=config.pass
         this.redis=require('redis').createClient(config.port, config.ip, {no_ready_check: true});
+        
+        this.redis.on('connect', function() {
+            console.log('Redis client connected');
+        });
+
+        this.redis.on('error', function (err) {
+            console.log('Something went wrong ' + err);
+        });
        // console.log('redis',this.redis)
     }
     getSession(msg,func,self)
@@ -31,7 +42,7 @@ module.exports = class sessionManagerService{
     setSession(msg,func,self)
     { 
         var dt=msg.data
-                   // console.log('redis set>>>>>>',msg)
+                    console.log('redis set>>>>>>',msg)
         if(!dt.id)
         {
             return func()

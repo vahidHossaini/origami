@@ -1,9 +1,12 @@
-var uuid=require('uuid')
-var WebSocketClient = require('websocket').client;
+var uuid={}
+var WebSocketClient={} ;
 var transport={}
 module.exports = class clientService
 {
-    constractor(){}
+    constractor(){
+        uuid=require('uuid')
+        WebSocketClient = require('websocket').client;
+    }
     init(srv)
     {
         console.log('connect to --------------------------',srv)

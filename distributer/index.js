@@ -1,6 +1,6 @@
 var route={}
 var structs={}
-var Promise = require('promise');
+//var Promise = require('promise');
 var servers={} 
 var client=require('./remote')
 module.exports = class distributorService

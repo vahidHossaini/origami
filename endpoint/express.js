@@ -1,12 +1,11 @@
-var crypto = require('crypto');
+var crypto = {}
 var url = require('url');
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
 var captchapng = require('captchapng');
-var path = require('path');
-var redisSession = require('node-redis-session');
+var path = require('path'); 
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -127,7 +126,15 @@ module.exports=class expr
     if(config.sessionManager)
     {
         app.use(cookieParser());
-        app.use(redisSession());
+       var RedisStore = require('connect-redis')(session);
+        app.use(session({
+            store: new RedisStore({
+                host:config.sessionManager.connection.host,
+                port:config.sessionManager.connection.port,
+                pass:config.sessionManager.connection.pass
+            }),
+            secret: 'keyboard cat' 
+        }));
     }    
     else
     {    
@@ -152,6 +159,7 @@ module.exports=class expr
     })  
     if(config.decodeUrl)
     {
+        crypto= require('crypto');
 //var mystr = mykey.update('{"d":"test","s":"test1","a":12}', 'utf8', 'hex')
 //mystr += mykey.final('hex');
 
@@ -219,6 +227,8 @@ module.exports=class expr
       if(!seperate || seperate.length!=3)
         //return res.status(200).send({message:'glb001'})
         return self.sendData(self,res,200,{message:'glb001'})
+        
+        
       var session = req.session;
       
       
@@ -240,7 +250,12 @@ module.exports=class expr
           }
           else
           {
-            body.data=req.body
+            body.data=req.body 
+            var bx = url_parts.query; 
+            for(var a in bx)
+            {
+                body.data[a]=bx[a]
+            } 
           }
           self.checkCaptcha(body.data,req,seperate,(cph)=>{
             if(!cph)
