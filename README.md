@@ -2,7 +2,14 @@
 The OrigamiCore Is Sipmle Framework For Small And Medium Projects.
 
 # Installation
-npm install origamicore --save
+install cli :
+npm i -g oricli
+
+create new project :
+oricli new
+
+then install packages :
+oricli install 
 
 # SubModule
 These Module Are Under Development 
@@ -36,10 +43,8 @@ For More Information , See The Documentation For Each Module
 
 ### Sample
 Run Http Service On Port 8080
-
-	var origami=require('origamicore')
-    global.path=__dirname 
-	var config=[
+change config.js to :
+	module.exports =[
 	{
 		name:'endpoint',	
 		express:[{
@@ -50,5 +55,3 @@ Run Http Service On Port 8080
 		}]	
 	}
 	]
-	var server=new origami(config)
-	server.start()
