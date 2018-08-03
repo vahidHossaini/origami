@@ -51,3 +51,4 @@ Run Http Service On Port 8080
 	}
 	]
 	var server=new origami(config)
+	server.start()
