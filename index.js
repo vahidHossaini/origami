@@ -46,7 +46,7 @@ module.exports = class origami
 
                 }
                 catch(exp){
-                    console.log('not found '+a.name)
+                   // console.log('not found '+a.name)
                 }
             } 
         }
