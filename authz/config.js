@@ -7,7 +7,7 @@ module.exports = class databaseConfig
     }
     getPackages()
     {
-        var p=['uuid@3.3.2']
+        var p=['uuid']
         
         return p
     }

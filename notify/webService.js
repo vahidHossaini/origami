@@ -41,14 +41,19 @@ module.exports = class nofifyWebService
                 option[self.config.htmlField]=tmp.html
                 
             
-        console.log('send message',option)
+        //console.log('send message',option)
             this.connection.post(this.config.sendUrl,option, function(res){
                 res.setEncoding('utf8');
+                var dt=''
                 res.on('data', function(chunk) {
-        console.log('send message recive',chunk)
-                     return func(null,chunk)
+        //console.log('send message recive',chunk)
+                    dt+=chunk
+                    // return func(null,chunk)
                      
                 });
+                res.on('end', () => {
+                     return func(null,dt)
+                })
             }); 
         })
     }
