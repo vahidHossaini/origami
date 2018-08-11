@@ -126,14 +126,18 @@ module.exports=class expr
     if(config.sessionManager)
     {
         app.use(cookieParser());
-       var RedisStore = require('connect-redis')(session);
+        var RedisStore = require('connect-redis')(session);
+        var objsession={host:config.sessionManager.connection.host,
+                port:config.sessionManager.connection.port,}
+        if(config.sessionManager.connection.pass)    
+        {
+            objsession.pass=config.sessionManager.connection.pass
+        }    
         app.use(session({
-            store: new RedisStore({
-                host:config.sessionManager.connection.host,
-                port:config.sessionManager.connection.port,
-                pass:config.sessionManager.connection.pass
-            }),
-            secret: 'keyboard cat' 
+            store: new RedisStore( objsession),
+            secret: 'keyboard cat' ,
+            resave: true,
+            saveUninitialized: true
         }));
     }    
     else
@@ -191,7 +195,7 @@ module.exports=class expr
         if(config.bodyLimit)
             app.use(bodyParser.json({limit: config.bodyLimit*1026*1024}));
         if(config.urlLimit)
-            app.use(bodyParser.urlencoded({limit: config.urlLimit*1026*1024}));
+            app.use(bodyParser.urlencoded({limit: config.urlLimit*1026*1024,extended: true}));
         
     }
     if(config.http)
