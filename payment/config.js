@@ -7,13 +7,13 @@ module.exports = class databaseConfig
     }
     getPackages()
     {
-        var p=['jalaali-js']
-        
+        var p=['superagent'] 
         return p
     }
+    
     getVersionedPackages()
     {
-        var p=['jalaali-js@1.1.0']
+        var p=['superagent@3.8.3']
         return p
     }
 }

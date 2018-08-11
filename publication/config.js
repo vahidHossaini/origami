@@ -10,4 +10,10 @@ module.exports = class databaseConfig
         var p=['eval']
         return p
     }
+    
+    getVersionedPackages()
+    {
+        var p=['eval@0.1.2']
+        return p
+    }
 }

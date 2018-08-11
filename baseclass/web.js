@@ -1,4 +1,4 @@
-var Promise = require('promise');
+ 
 module.exports = class web
 {
     constructor()

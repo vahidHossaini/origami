@@ -24,4 +24,23 @@ module.exports = class databaseConfig
         }
         return p
     }
+    
+    getVersionedPackages()
+    {
+        var p=[]
+        for(var a of this.config.connection)
+        {
+            if(a.type=='mongodb')
+            {
+                p.push('odata-v4-mongodb@0.1.12') 
+                p.push('mongodb@3.1.1')
+            }
+            if(a.type=='mysql')
+            {
+                p.push('odata-v4-mysql')
+                p.push('mysql') 
+            }
+        }
+        return p 
+    }
 }

@@ -10,4 +10,9 @@ module.exports = class databaseConfig
         var p=['uuid']
         return p
     }
+    getVersionedPackages()
+    {
+        var p=['uuid@3.3.2']
+        return p
+    }
 }

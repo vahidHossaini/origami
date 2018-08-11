@@ -7,8 +7,13 @@ module.exports = class databaseConfig
     }
     getPackages()
     {
-        var p=['uuid']
+        var p=['uuid@3.3.2']
         
+        return p
+    }
+    getVersionedPackages()
+    {
+        var p=['uuid@3.3.2']
         return p
     }
 }
