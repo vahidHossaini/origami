@@ -38,15 +38,16 @@ module.exports = class mongodb
             {
                 repurl='mongodb://'+r.username+':'+r.password+'@'+r.host+':'+port+'/'+r.database+'?replicaSet='+r.name
             }
-            console.log('////',repurl)
-            self.MongoClient.connect(repurl).then(client => {
-            console.log('////',client)
+            //console.log('////',repurl)
+            self.MongoClient.connect(repurl,{reconnectInterval: 10000,useNewUrlParser: true}).then(client => {
+            //console.log('////',client)
                 self.dbReplication = client.db(r.database);
                 self.replicaColl={}
                 self.replicaReq={}
                 //console.log('connect to MongoClient Replication',self.dbReplication.collection('users').watch)
             }).catch((exp)=>{
-                console.log('e : ',exp)
+                console.log('Replication Error : ',e.message)
+                //console.log('e : ',exp)
             })
         }
     }
