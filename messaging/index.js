@@ -44,7 +44,7 @@ module.exports = class messaging
             if(this.isProjectable && session.projects && session.projects.length)
             for(var x of session.projects)
             {
-                projs.push({projects.id:x.id})
+                projs.push({id:x.id})
             }
             global.db.Search(this.context,'messages',{where:{$and:[
                 {submitDate:{$gt:lastDate}},
@@ -59,10 +59,10 @@ module.exports = class messaging
             
             var condition={$and:[{$or:[]}]}
             if(lastDate)
-                condition.['$and'].push({submitDate:{$gt:lastDate}})
-            condition.['$and'][0]['$or'].push({$and:[{userid:{$eq:null}},{roles:{$eq:null}},{projects:{$eq:null}}]})
+                condition['$and'].push({submitDate:{$gt:lastDate}})
+            condition['$and'][0]['$or'].push({$and:[{userid:{$eq:null}},{roles:{$eq:null}},{projects:{$eq:null}}]})
             if(this.isProjectable && sess.project)
-            
+            {}
         })
     }
 }

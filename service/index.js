@@ -1,51 +1,120 @@
 
 module.exports = class services
 {
-  constructor(config,dist)
-  {
-    this.queueDomain={}   
-    this.context=config.context
-    this.driver=new (require(config.driver))(config,dist)
-    if(config.structure)
-        this.enums=require(config.structure)
-    //console.log('enums--->',this.enums)
-    this.queue=new (require('./simpleQueue.js'))()
-    var isQ=false
-    var queueNames={}
-    for(var a of config.funcs)
+    reload(config)  
     {
-        if(a.queue)
-        {
-            isQ=true
-            queueNames[a.queue]=0
-            this.queue.addQueue(a.queue)
-            this.queueDomain[config.domain+'_'+a.name]=a.queue
-            console.log('Quee',config.domain,a.name)
-            dist.addFunction(config.domain,a.name, this.SetQueue,this,a.inputs)
+       // console.log('reload service')
+        if(JSON.parse(JSON.stringify(config))==JSON.parse(JSON.stringify(this.config)))
+        { 
+       //     console.log('new Config')
+            this.config=config
         }
-        else
-            dist.addFunction(config.domain,a.name, this.driver[a.name],this.driver,a.inputs)
+        if(this.driver.clear)
+        {
+            this.driver.clear()
+        }
+        delete require.cache[require.resolve(config.driver)]
+        this.driver=new (require(config.driver))(config,dist)
+            //console.log('driver is',this.driver.test)
+            var fs=require('fs')
+            //console.log(fs.readFileSync(config.driver)+'')
+        if(config.structure)
+            this.enums=require(config.structure)
+
+
+
+
+            
+        this.queue=new (require('./simpleQueue.js'))()
+        var isQ=false
+        var queueNames={}
+        for(var a of config.funcs)
+        {
+            if(a.queue)
+            {
+                isQ=true
+                queueNames[a.queue]=0
+                this.queue.addQueue(a.queue)
+                this.queueDomain[config.domain+'_'+a.name]=a.queue
+                console.log('Quee',config.domain,a.name)
+                this.dist.addFunction(config.domain,a.name, this.SetQueue,this,a.inputs)
+            }
+            else
+                this.dist.addFunction(config.domain,a.name, this.driver[a.name],this.driver,a.inputs)
+        }
+        for(var a in queueNames)
+        {
+            this.RunQueueReader(a)
+        } 
+        global.authz[config.domain]=config.funcs
+        global.auth[config.domain]={}
+        for(var x of config.auth)
+        {
+            if(typeof(x)=='string')
+                global.auth[config.domain][x]='public'
+            else
+                global.auth[config.domain][x.name]=x.role
+        }
+        if(config.structure)
+        {
+            var structure=require(config.structure) 
+            this.dist.setClass(config.domain,structure)
+            
+        }
     }
-    for(var a in queueNames)
+    clear()
     {
-        this.RunQueueReader(a)
-    } 
-    global.authz[config.domain]=config.funcs
-    global.auth[config.domain]={}
-    for(var x of config.auth)
-    {
-        if(typeof(x)=='string')
-            global.auth[config.domain][x]='public'
-        else
-            global.auth[config.domain][x.name]=x.role
+        this.driver.clear()
+        delete global.authz[config.domain]
+        delete global.auth[config.domain]
     }
-    if(config.structure)
+    constructor(config,dist)
     {
-        var structure=require(config.structure) 
-        dist.setClass(config.domain,structure)
-        
+        this.queueDomain={}   
+        this.config=config
+        this.dist=dist
+        this.context=config.context
+        this.driver=new (require(config.driver))(config,dist)
+        if(config.structure)
+            this.enums=require(config.structure)
+        //console.log('enums--->',this.enums)
+        this.queue=new (require('./simpleQueue.js'))()
+        var isQ=false
+        var queueNames={}
+        for(var a of config.funcs)
+        {
+            if(a.queue)
+            {
+                isQ=true
+                queueNames[a.queue]=0
+                this.queue.addQueue(a.queue)
+                this.queueDomain[config.domain+'_'+a.name]=a.queue
+                console.log('Quee',config.domain,a.name)
+                this.dist.addFunction(config.domain,a.name, this.SetQueue,this,a.inputs)
+            }
+            else
+                this.dist.addFunction(config.domain,a.name, this.driver[a.name],this.driver,a.inputs)
+        }
+        for(var a in queueNames)
+        {
+            this.RunQueueReader(a)
+        } 
+        global.authz[config.domain]=config.funcs
+        global.auth[config.domain]={}
+        for(var x of config.auth)
+        {
+            if(typeof(x)=='string')
+                global.auth[config.domain][x]='public'
+            else
+                global.auth[config.domain][x.name]=x.role
+        }
+        if(config.structure)
+        {
+            var structure=require(config.structure) 
+            this.dist.setClass(config.domain,structure)
+            
+        }
     }
-  }
   
     SetQueue(msg,func,self,domain)
     {

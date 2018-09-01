@@ -72,7 +72,7 @@ module.exports=class socket
             }
         })
     }
-   async echoProtocolMessage(message,connection,key,dist)
+    async echoProtocolMessage(message,connection,key,dist)
     {
         //console.log(request.key)  
         if (message.type === 'utf8')
@@ -112,9 +112,13 @@ module.exports=class socket
                     {
                         body.session=session.session
                     }
-                    var dt =await dist.run('authz','checkRole',{data:{domain:data.domain,subDomain:data.service},session:session.session})
-                    if(!dt.i)
-                       return connection.sendUTF(JSON.stringify({error:'access'}));
+                    if(this.config.authz)
+                    {
+                        var dt =await dist.run(this.config.authz.domain,'checkRole',{data:{domain:data.domain,service:data.service},session:session.session})
+                        if(!dt.i)
+                        return connection.sendUTF(JSON.stringify({error:'access'}));
+
+                    }
                         
                     this.dist.run(data.domain,data.service,body,(ee,dd)=>{ 
                         this.response(ee,dd,connection,key,data.id)

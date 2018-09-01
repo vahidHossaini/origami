@@ -1,6 +1,6 @@
 {
   "name": "origamicore",
-  "version": "1.1.2",
+  "version": "1.1.7",
   "description": "origami core ",
   "main": "index.js",
   "scripts": {

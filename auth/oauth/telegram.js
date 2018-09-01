@@ -12,7 +12,7 @@ module.exports = class telegramOauth
     }
     login(msg,func,self)
     {
-          var dt=msg.data
+        var dt=msg.data
         var str=''
         var arr=[]
         for(var a in dt)

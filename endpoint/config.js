@@ -33,6 +33,7 @@ module.exports = class databaseConfig
             p.push("express-session")
             p.push("captchapng")
             p.push("path")
+            p.push("connect-redis")
             
             for(var a of this.config.express)
             {
@@ -71,6 +72,7 @@ module.exports = class databaseConfig
             p.push("body-parser")
             p.push("express-session@1.15.6")
             p.push("captchapng@0.0.1") 
+            p.push("connect-redis@3.3.3")
             
             for(var a of this.config.express)
             {

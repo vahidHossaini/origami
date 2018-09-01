@@ -379,7 +379,7 @@ module.exports = class mongodb
                     var field =array.field 
                     var subfield =array.subfield
                     var func='$push'
-                    var val 
+                    var val =array.value
                     if(array.unique)
                         func='$addToSet'
                     

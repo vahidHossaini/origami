@@ -14,6 +14,10 @@ module.exports = class distributorService
       structs[domain]=structure
      // console.log('----',structure)
   }
+  deleteDomain(domain)
+  {
+    delete route[domain]
+  }
   addFunction(domain,subDomain,func,self,inputs)
   {
     if(!route[domain])
@@ -172,22 +176,26 @@ module.exports = class distributorService
         var imp=mself.checkInputs(domain,subDomain,data.data,mself)
         if(!imp)
             return func({m:'not Valid Inputs'})
-            
+        if(!route[domain][subDomain].func)
+        {
+            return func({m:'function not define'})
+
+        }    
         return route[domain][subDomain].func(data,func,self,route[domain][subDomain].domain)
     }
     else
     {
-         console.log('Not Mach',domain,subDomain)
+         console.log('Not Mach ',domain,subDomain)
     }
     if(func)
     {
-        console.log('Not Mach',domain,subDomain)
-        return func({routeMessage:'Not Mach'+domain+'/'+subDomain})
+        console.log('Not Mach ',domain,subDomain)
+        return func({routeMessage:'Not Mach '+domain+'/'+subDomain})
     }
     
     return new Promise(function (resolve, reject) {
-        console.log('Not Mach',domain,subDomain)
-        reject({routeMessage:'Not Mach'+domain+'/'+subDomain})
+        console.log('Not Mach ',domain,subDomain)
+        reject({routeMessage:'Not Mach '+domain+'/'+subDomain})
     })
     
   }

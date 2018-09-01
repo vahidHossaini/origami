@@ -9,6 +9,14 @@ module.exports = class baseclass
      
   setup()
   {
+      global.consoleColor={
+          red:"\x1b[31m%s\x1b[0m",
+          green:"\x1b[32m%s\x1b[0m",
+          yellow:"\x1b[33m%s\x1b[0m",
+          blue:"\x1b[34m%s\x1b[0m",
+          white:"\x1b[37m%s\x1b[0m",
+          cyan:"\x1b[36m%s\x1b[0m",
+      }
       global.trace=function trace(s) {
                     const orig = Error.prepareStackTrace;
                     Error.prepareStackTrace = (_, stack) => stack;
