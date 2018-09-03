@@ -4,9 +4,13 @@ module.exports = class services
     reload(config)  
     {
        // console.log('reload service')
-        if(JSON.parse(JSON.stringify(config))==JSON.parse(JSON.stringify(this.config)))
+       // console.log(JSON.parse(JSON.stringify(config)))
+       // console.log(JSON.parse(JSON.stringify(this.config)))
+        if(JSON.parse(JSON.stringify(config))!=JSON.parse(JSON.stringify(this.config)))
         { 
-       //     console.log('new Config')
+            console.log('new Config')
+            if(this.config.domain!=config.domain)
+                this.dist.deleteDomain(this.config.domain)
             this.config=config
         }
         if(this.driver.clear)
@@ -28,6 +32,7 @@ module.exports = class services
         this.queue=new (require('./simpleQueue.js'))()
         var isQ=false
         var queueNames={}
+        
         for(var a of config.funcs)
         {
             if(a.queue)
