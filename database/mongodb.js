@@ -269,6 +269,7 @@ module.exports = class mongodb
             {
                 msel[a]=1
             }
+            msel={fields:msel} 
             pxt=pxt.find(syn.where,msel)
             pxtcount=pxtcount.find(syn.where,msel)
         }
