@@ -21,12 +21,12 @@ module.exports = class moduleService
     }
     loadConfig()
     {
-      if(!fs.existsSync(global.path+'\\origami-modules\\'))
+      if(!fs.existsSync(global.path+'/origami-modules/'))
       {
         console.log(global.consoleColor.red,'module'+this.config.type+' not found ')
         return
       }
-      var p=global.path+'\\origami-modules\\'+this.config.type+'\\'
+      var p=global.path+'/origami-modules/'+this.config.type+'/'
       var boot=new (require(p+'bootstrap.js'))(this.config)
       var conf={
         domain:this.config.type,
