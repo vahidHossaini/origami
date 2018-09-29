@@ -16,18 +16,20 @@ module.exports = class origami
     reload()
     {
         var nconfig=this.reloadData()
-        //console.log('reload Data')
+        console.log('begin Reload Project')
         for(var a of nconfig)
         {
             if(a.id)
             {
                 if(this.modulesId[a.id])
                 {
+                    //console.log('reload exist project : '+a.name)
                     if(this.modulesId[a.id].reload)
                         this.modulesId[a.id].reload(a)
                 }
                 else
                 {
+                    console.log('add new : '+a.name)
                     this._loadModule(a)
                 }
             }
@@ -75,7 +77,7 @@ module.exports = class origami
         else
         {
             var m=new (require('./'+a.name+'/index'))(a,dist)
-            this.modules(m)
+            this.modules.push(m)
             if(a.id)
             {
                 this.modulesId[a.id]=m
