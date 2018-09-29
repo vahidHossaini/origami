@@ -43,6 +43,7 @@ module.exports=class socket
         server.listen(config.port, ()=> {
             console.log(  'Socket Server is listening on port '+config.port+' '+config.mode);
         });
+        this.server=server
         var wsServer = new WebSocketServer({
             httpServer: server,
             autoAcceptConnections: false
@@ -200,5 +201,9 @@ module.exports=class socket
     {
         if(session[key])
             delete session[key]
+    }
+    cleare()
+    {
+        this.server.close()
     }
 }
