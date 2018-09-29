@@ -2,15 +2,12 @@
 module.exports = class services
 {
     reload(config)  
-    {
-       // console.log('reload service')
-       // console.log(JSON.parse(JSON.stringify(config)))
-       // console.log(JSON.parse(JSON.stringify(this.config)))
-        if(JSON.parse(JSON.stringify(config))!=JSON.parse(JSON.stringify(this.config)))
+    { 
+        if(JSON.stringify(config)!=JSON.stringify(this.config))
         { 
             console.log('new Config')
-            if(this.config.domain!=config.domain)
-                this.dist.deleteDomain(this.config.domain)
+            //if(this.config.domain!=config.domain)
+            this.dist.deleteDomain(this.config.domain)
             this.config=config
         }
         if(this.driver.clear)
@@ -18,17 +15,10 @@ module.exports = class services
             this.driver.clear()
         }
         delete require.cache[require.resolve(config.driver)]
-        this.driver=new (require(config.driver))(config,dist)
-            //console.log('driver is',this.driver.test)
-            var fs=require('fs')
-            //console.log(fs.readFileSync(config.driver)+'')
+        this.driver=new (require(config.driver))(config,this.dist) 
+        var fs=require('fs') 
         if(config.structure)
-            this.enums=require(config.structure)
-
-
-
-
-            
+            this.enums=require(config.structure) 
         this.queue=new (require('./simpleQueue.js'))()
         var isQ=false
         var queueNames={}
