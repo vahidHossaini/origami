@@ -118,6 +118,11 @@ module.exports=class newExpr
             }
             else
             {
+                if(config.CrossDomain=='*')
+                    res.header('Access-Control-Allow-Origin', req.headers.origin);
+                else
+                    res.header('Access-Control-Allow-Origin', config.CrossDomain);
+                    res.setHeader('Access-Control-Allow-Credentials', true);
                 next()
             }
             });
@@ -207,6 +212,7 @@ module.exports=class newExpr
             var server = http.createServer(app);
             server.listen(config.http.port);
             console.log(global.consoleColor.green,'http run at port '+ config.http.port)
+            this.server=server
         }
         if(config.https)
         {
@@ -214,6 +220,7 @@ module.exports=class newExpr
             var server = http.createServer(app);
             server.listen(config.https.port);
             console.log(global.consoleColor.green,'http run at port '+ config.https.port)
+            this.server=server
         }
     }
     reqToDomain(config,req,self,res)
@@ -320,5 +327,9 @@ module.exports=class newExpr
             }
 
         })
+    }
+    clear()
+    {
+        this.server.close();
     }
 }
