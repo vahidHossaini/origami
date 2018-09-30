@@ -1,6 +1,158 @@
  
+//var createFilter = require('odata-v4-mongodb').createFilter;
+var parser = require('odata-v4-parser');
+var methods=function(token)
+{
+    if(token.method=="startswith")
+    {
+        var p=token.parameters
+        var obj={}
+        obj[convert(p[0])]={'$regex':"\^"+convert(p[1])+""}
+        console.log(obj)
+        //obj[convert(p[1])]={'$regex':\^convert(p[0])\}
+        return obj
+    }
+    if(token.method=="endswith")
+    {
+        var p=token.parameters
+        var obj={}
+        obj[convert(p[0])]={'$regex':""+convert(p[1])+"\^"}
+        console.log(obj)
+        //obj[convert(p[1])]={'$regex':\^convert(p[0])\}
+        return obj
+    }
+    if(token.method=="substringof")
+    {//regex
+        var p=token.parameters
+        var obj={}
+        obj[convert(p[1])]={'$regex':convert(p[0])}
+        return obj
+    }
+}  
+var convert = function(token)
+{
+    var obj={} 
+    if(token.value)
+    {
+        if(token.type=="Literal")
+        {
+             if(token.value=="Edm.Boolean")
+             {
+                 return !!(token.raw)
+             }
+             if(token.value=="null")
+             {
+                 return null
+             }
+             if(token.value=="Edm.SByte")
+             {
+                 return parseInt(token.raw)
+             }
+             if(token.value=="Edm.Int16")
+             {
+                 return parseInt(token.raw)
+             }
+             if(token.value=="Edm.Int32")
+             {
+                 return parseInt(token.raw)
+             }
+             if(token.value=="Edm.String")
+             {
+                 return token.raw.substr(1,token.raw.length-2)
+             }
+        }
+        if(token.type=="MethodCallExpression")
+        {
+            return methods(token.value)
+        }
+        if(token.type=="ODataIdentifier")
+        {
+            console.log('XXX->',token.value)
+            return token.value.name
+        }
+        if(token.type=="AndExpression")
+        {
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+            console.log('VVVVV ',lf)
+            return {"$and":[lf,cv]}
+        }
+        if(token.type=="EqualsExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$eq']=cv
+                obj[lf] =s
+            
+        }
+        if(token.type=="GreaterThanExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$gt']=cv
+                obj[lf] =s
+            
+        }
+        if(token.type=="GreaterOrEqualsExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$gte']=cv
+                obj[lf] =s
+            
+        }
+        if(token.type=="LesserThanExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$lt']=cv
+                obj[lf] =s
+            
+        }
+        if(token.type=="LesserOrEqualsExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$lte']=cv
+                obj[lf] =s
+            
+        }
+        if(token.type=="NotEqualsExpression")
+        {
+            var s={}
+            var cv=convert(token.value.right)
+            var lf=convert(token.value.left) 
+                s['$ne']=cv
+                obj[lf] =s
+            
+        }
+         
+        if(token.value.current)
+        {
+            var cv=convert(token.value.current)+'.'+convert(token.value.next)
+            console.log('CCC->',cv)
+           return   cv
+        }
+        if(token.type=="PropertyPathExpression"||
+        token.type=="CommonExpression"||
+        token.type=="MemberExpression"||
+        token.type=="SingleNavigationExpression"||
+        token.type=="FirstMemberExpression")
+            return convert(token.value)
+    }
+    return obj
+}
 
-var createFilter = require('odata-v4-mongodb').createFilter;
+
+var createFilter =function(data)
+{
+    return convert(parser.filter(data))
+}
 const assert = require("assert");
 
 module.exports = class mongodb
