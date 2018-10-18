@@ -1,4 +1,4 @@
- 
+var request = require('request');
 module.exports = class web
 {
     constructor()
@@ -25,20 +25,30 @@ module.exports = class web
     }
     post(url,data,func)    
     {
+        var options = { method: 'POST',
+            url: url,
+            body:data,
+            json: true };
+            console.log(options)
         if(func)
         {
-            request.post({url:url,form:data}, function (error, response, body) {
+            request(options, function (error, response, body) {
+                //if (error) throw new Error(error);
+              
                 func(error,body)
-            })            
+              });
+                       
         }
         else
         {
+            console.log(options)
             return new Promise(function (resolve, reject) {
-                request.post({url:url,form:data}, function (error, response, body) {
-                    if(error)
-                        return reject(error)
+                request(options, function (error, response, body) {
+                    if (error) return reject(error);
+                  
                     return resolve(body)
-                }) 
+                  });
+               
             })
         }        
     }
