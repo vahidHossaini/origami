@@ -195,10 +195,11 @@ module.exports = class mongodb
             //console.log('////',client)
                 self.dbReplication = client.db(r.database);
                 self.replicaColl={}
-                self.replicaReq={}
+                self.replicaReq={} 
+                console.log('Replication OK')
                 //console.log('connect to MongoClient Replication',self.dbReplication.collection('users').watch)
             }).catch((exp)=>{
-                console.log('Replication Error : ',e.message)
+                console.log('Replication Error : ',exp.message)
                 //console.log('e : ',exp)
             })
         }
@@ -232,8 +233,31 @@ module.exports = class mongodb
     }
     objectToWhere(obj)
     {
+        if( typeof(obj)!='object' || obj.$in){
+            return
+        }
         for(var a in obj)
-        {
+        { 
+            if(obj[a] && obj[a].$bitAnd)
+            {
+                obj[a].$bitsAllSet=obj[a].$bitAnd
+                delete obj[a].$bitAnd
+            }
+            if(obj[a] && obj[a].$bitNotAnd)
+            {
+                obj[a].$bitsAllClear=obj[a].$bitNotAnd
+                delete obj[a].$bitNotAnd
+            }
+            if(obj[a] && obj[a].$bitOr)
+            {
+                obj[a].$bitsAnySet=obj[a].$bitOr
+                delete obj[a].$bitOr
+            }
+            if(obj[a] && obj[a].$bitNoOr)
+            {
+                obj[a].$bitsAnyClear=obj[a].$bitNoOr
+                delete obj[a].$bitNoOr
+            }
             if(obj[a] && obj[a].$like)
             {
                 var stval= new RegExp(context.literal, "gi")            
@@ -247,6 +271,7 @@ module.exports = class mongodb
                 
             }
         } 
+        
         if(obj.$and)
         {
             for(var x of obj.$and)
@@ -292,8 +317,8 @@ module.exports = class mongodb
         } 
         if(box.where)
         { 
+            console.log('------------------------**',box.where)
             this.objectToWhere(box.where) 
-            //console.log(box.where)
         }
         
         
@@ -391,7 +416,14 @@ module.exports = class mongodb
         var syn=this.CreateSyntax(name,box,odata)
         var ms=this.struct[name] 
         var selectGroup=syn.selectGroup
-        var pxt=me.connection.collection(name)
+        var pxt=null
+
+        try{
+            pxt=me.connection.collection(name)
+        }catch(exp){
+            console.log('erro get collection => '+name)
+            return func({m:"get collection error"})
+        }
         var pxtcount=me.connection.collection(name)
         if(selectGroup.length)
         {
@@ -656,7 +688,13 @@ module.exports = class mongodb
             var obj={}
             if(!err)
                 obj.isDone=true
-            obj.insertedCount=res.result.n
+                
+            if(res.result)    
+                 obj.insertedCount=res.result.n
+            if(res.insertedId)
+            {
+                obj._id=res.insertedId
+            }                
             //console.log(obj)
             //console.log(res)
             func(err, obj)

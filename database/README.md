@@ -3,7 +3,7 @@ This module connect to database and CRUD
 supporetd database:
 - mongodb
 - mysql
-- sqlserver (Is not currently active)
+- sqlserver (not supported yet)
 
 
 # Configuration
