@@ -84,8 +84,8 @@ module.exports=class socket
                 {
                     if(!data.param)
                         data.param={}
-                    data.param.pubid=this.pubcon
-                    
+                    //data.param.pubid=this.pubcon
+                    data.param.pubid={id:this.pubcon.id+process.pid}
                 }
                 if(!data.domain || !data.service)
                 {
