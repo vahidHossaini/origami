@@ -43,6 +43,18 @@ module.exports = class services
         } 
         global.authz[config.domain]=config.funcs
         global.auth[config.domain]={}
+        global.captcha[config.domain]={}
+        for(var a of config.funcs)
+        {
+            if(a.role)
+            {
+                global.auth[config.domain][a.name]=a.role
+            }
+            if(a.captcha)
+            {
+                global.captcha[config.domain][a.name]=a.captcha
+            }
+        }
         for(var x of config.auth)
         {
             if(typeof(x)=='string')
