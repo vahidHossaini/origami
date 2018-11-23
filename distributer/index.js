@@ -64,6 +64,7 @@ module.exports = class distributorService
                 return false
             }
         }
+        //enumurable objects 
         if(!st[type].struct)
         {
             if(typeof(dt)!='number')
