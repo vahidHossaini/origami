@@ -18,7 +18,7 @@ module.exports = class publication
     }
     async updateChanges(data)
     {
-        console.log('updateChanges------->',data)
+        //console.log('updateChanges------->',data)
         var id=data.documentKey._id 
         //ns: { db: 'sht_dev', coll: 'users' }
         if(!data.ns)
@@ -50,6 +50,7 @@ module.exports = class publication
             
         }
         if(data.operationType=='insert'){
+            console.log('insert')
             var newData=data.fullDocument
             for(var a in mself.userRep)
                 for(var j in mself.userRep[a])
@@ -64,11 +65,12 @@ module.exports = class publication
                 }
         }
         if(data.operationType=='update'){
+            //console.log('update')
             var newData=data.updateDescription 
             var fulldoc=null
             var tmp=await global.db.Search(mself.context,type,{where:{_id:id}})
-            if(tnp.value.length)
-                fulldoc=tnp.value[0]
+            if(tmp.value.length)
+                fulldoc=tmp.value[0]
             else
                 fulldoc={}
             for(var a in mself.userRep)
@@ -77,18 +79,24 @@ module.exports = class publication
                     let b=mself.userRep[a][j]
                     if(b.type==type )
                     {
+                        //console.log('->',b.condition)
                         if(b.ids[id])
                         {
-                            if(b.condition(newData))
+                            if(newData.updatedFields)
                             {
-                                b.ids[id]=true
-                                mself.connection[b.repId](null,{user:a,name:j,type:b.type,action:'update',key:id,data:newData}) 
-                            }
-                            else
-                            {
-                                delete b.ids[id]
-                                mself.connection[b.repId](null,{user:a,name:j,type:b.type,action:'delete',key:id })
-                                
+                                //console.log('Update-->',b.conditionUpdate(newData.updatedFields))
+                                //console.log('Update1-->',newData.updatedFields)
+                                if(b.conditionUpdate(newData.updatedFields))
+                                {
+                                    b.ids[id]=true
+                                    mself.connection[b.repId](null,{user:a,name:j,type:b.type,action:'update',key:id,data:newData}) 
+                                }
+                                else
+                                {
+                                    delete b.ids[id]
+                                    mself.connection[b.repId](null,{user:a,name:j,type:b.type,action:'delete',key:id })
+                                    
+                                } 
                             }
                         }
                         else
@@ -104,6 +112,7 @@ module.exports = class publication
                 }
         }
         if(data.operationType=='delete'){ 
+            console.log('delete')
             for(var a in mself.userRep)
                 for(var j in mself.userRep[a])
                 {
@@ -128,6 +137,7 @@ module.exports = class publication
             self.replications[data.type]=true
             global.db.Replicate(self.context,data.type,self.updateChanges)
         }
+        console.log('>>>1')
         if(!self.userRep[userid])
             self.userRep[userid]={}
         if(!self.userRep[userid][name])
@@ -141,13 +151,22 @@ module.exports = class publication
                 data:[]
             }
         var q={}
+        console.log('>>>3')
         if(data.condition)
             q.where=data.condition
-        var dt = await global.db.Search(self.context,data.type,q,{}) 
-        //console.log('>>>',dt)
+        console.log('>>>3.1')
+        try{
+        console.log('>>>3.2')
+         var dt = await global.db.Search(self.context,data.type,q,{}) 
+
+         console.log('>>>4')
+        }catch(exp){
+            console.log('setReplication--->',exp)
+        } 
         for(var a of dt.value)
         {
 
+            console.log('>>>5')
         mself.connection[repId](null,{
             user:userid,
             name:name,
@@ -155,7 +174,7 @@ module.exports = class publication
             action:'insert',key:a._id,data:a })
             //this.userRep[userid][name].data.push({status:'insert'})
             self.userRep[userid][name].ids[a._id]=true
-        }
+        } 
     }
     async createPublication(msg,func,self)
     {

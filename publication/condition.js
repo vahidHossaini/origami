@@ -8,18 +8,20 @@ module.exports = class condition
     static createCondition(cond)
     {
          var str=this.subCondition(cond)
-         console.log('----')
+        // console.log('----')
+        // console.log('module.exports = (input)=>{return '+str+'}')
          if(!str)
              str='true'
         return _eval('module.exports = (input)=>{return '+str+'}')
     }
-    static subCondition(cond)
+    static subCondition(cond,name)
     {
         var str=''
         for(var a in cond)
         {
             if(a=='$and' && cond[a].length)
             { 
+
                 str+='('
                 for(var b of cond[a])
                 {
@@ -38,29 +40,68 @@ module.exports = class condition
                 str=str.substr(0,str.length-3)
                 str+=')' 
             }
+            else if(a=='$in')
+            {
+                str+='('
+                for(var b of cond[a])
+                {
+                    if(typeof(b)=="number")
+                        str+=  ' '+name+'=='+b+' || '
+                    else
+                        str+=  ' '+name+'=="'+b+'" || '
+                } 
+
+                str=str.substr(0,str.length-3)
+                str+=')' 
+
+            }
             else if(a=='$eq')
             {
+                if(name)str+=" "+name+" "
                 str+= ' = ' + cond[a]
             }
             else if(a=='$ne')
             {
+                if(name)str+=" "+name+" "
                 str+= ' <> ' + cond[a]
             }
             else if(a=='$lt')
             {
+                if(name)str+=" "+name+" "
                 str+= ' < ' + cond[a]
             }
             else if(a=='$lte')
             {
+                if(name)str+=" "+name+" "
                 str+= ' <= ' + cond[a]
             }
             else if(a=='$gt')
             {
+                if(name)str+=" "+name+" "
                 str+= ' > ' + cond[a]
             }
             else if(a=='$gte')
             {
+                if(name)str+=" "+name+" "
                 str+= ' >= ' + cond[a]
+            }
+            else if(a=='$bitAnd')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' & ' + cond[a]
+            }
+            else if(a=='$bitNotAnd')
+            { 
+                str+= " ~("+name+' & ' + cond[a]+")"
+            }
+            else if(a=='$bitOr')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' | ' + cond[a]
+            }
+            else if(a=='$bitNoOr')
+            { 
+                str+= " ~("+name+' | ' + cond[a]+")"
             }
             else if(typeof(cond[a])!='object' || cond[a] instanceof Date)
             {
@@ -71,7 +112,7 @@ module.exports = class condition
             }
             else
             {
-                 str += 'input.'+ a +' ' + this.subCondition(cond[a])
+                 str +=   this.subCondition(cond[a],'input.'+ a +' ')
             }
             str += ' && '
         }
@@ -81,10 +122,10 @@ module.exports = class condition
     static createConditionCheck(cond)
     {
          var str=this.subConditionCheck(cond)
-         console.log('module.exports = (input)=>{return '+str+'}')
-        return _eval('module.exports = (input)=>{return '+str+'}')
+         console.log('============>','module.exports = (input)=>{return '+str+'}')
+        return _eval('module.exports = (input)=>{console.log(input); return '+str+'}')
     }
-    static subConditionCheck(cond)
+    static subConditionCheck(cond,name)
     {
         var str=''
         for(var a in cond)
@@ -109,40 +150,79 @@ module.exports = class condition
                 str=str.substr(0,str.length-3)
                 str+=')' 
             }
+            else if(a=='$in')
+            {
+                str+='('
+                for(var b of cond[a])
+                {
+                    if(typeof(b)=="number")
+                        str+=  ' '+name+'=='+b+' || '
+                    else
+                        str+=  ' '+name+'=="'+b+'" || '
+                } 
+                str=str.substr(0,str.length-3)
+                str+=')' 
+            }
             else if(a=='$eq')
             {
+                if(name)str+=" "+name+" "
                 str+= ' = ' + cond[a]
             }
             else if(a=='$ne')
             {
+                if(name)str+=" "+name+" "
                 str+= ' <> ' + cond[a]
             }
             else if(a=='$lt')
             {
+                if(name)str+=" "+name+" "
                 str+= ' < ' + cond[a]
             }
             else if(a=='$lte')
             {
+                if(name)str+=" "+name+" "
                 str+= ' <= ' + cond[a]
             }
             else if(a=='$gt')
             {
+                if(name)str+=" "+name+" "
                 str+= ' > ' + cond[a]
             }
             else if(a=='$gte')
             {
+                if(name)str+=" "+name+" "
                 str+= ' >= ' + cond[a]
+            }
+            else if(a=='$bitAnd')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' & ' + cond[a]
+            }
+            else if(a=='$bitNotAnd')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' & ~' + cond[a]
+            }
+            else if(a=='$bitOr')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' | ' + cond[a]
+            }
+            else if(a=='$bitNoOr')
+            {
+                if(name)str+=" "+name+" "
+                str+= ' | ~' + cond[a]
             }
             else if(typeof(cond[a])!='object' || cond[a] instanceof Date)
             {
                 //if(typeof(cond[a])=='string')
                 //    cond[a]='\''+cond[a]+'\''
                 //if()
-                    str += '(!input || input.'+ a +' == ' + cond[a]+' )'
+                    str += '(!input.'+ a +' || (input.'+ a +' == ' + cond[a]+') )'
             }
             else
             {
-                 str += '(!input || input.'+ a +' ' + this.subConditionCheck(cond[a])+' )'
+                 str += '(!input.'+ a +' || (' + this.subConditionCheck(cond[a],'input.'+a)+') )'
             }
             str += ' && '
         }
