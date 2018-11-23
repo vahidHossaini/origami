@@ -260,6 +260,18 @@ module.exports=class newExpr
         rt.body=body
         return rt
     }
+    addChecks(config,dist)
+    {
+        var drivers=[]
+        if(config.checks)
+        {
+            for(var a in config.checks)
+            {
+                drivers.push(new(require(a))(config.checks[a],dist))
+            }
+        }
+        return drivers
+    }
     constructor(config,dist)
     {
         var self=this
@@ -273,6 +285,7 @@ module.exports=class newExpr
         this.setCaptcha(app,config)
         this.setUrlParser(app,config)
         this.runServer(app,config)
+        var checks=this.addChecks(config,dist)
         app.use(async(req, res, next)=> {
             var data = this.reqToDomain(config,req,self,res)
             if(!data)
@@ -289,6 +302,21 @@ module.exports=class newExpr
             if(!chp) 
                 return self.sendData(self,res,200,{message:'glb003'})
             try{
+                
+                for(var ch of checks)
+                {
+                    try{
+                        
+                    var checkData=await ch.check(data,session,req,res)
+                    }catch(exp){
+                        console.log(exp)
+                    }
+                    
+                    if(!checkData.isDone)
+                    {
+                        return self.sendData(self,res,200,{message:'glb004'})
+                    }
+                }
                 var dd=await dist.run(data.domain,data.service,data.body)
                 
                 if(dd && dd.session && dd.session.length)

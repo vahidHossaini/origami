@@ -31,12 +31,24 @@ module.exports = class databaseConfig
             p.push("cookie-parser")
             p.push("body-parser")
             p.push("express-session")
-            p.push("captchapng")
+            //p.push("captchapng")
             p.push("path")
             p.push("connect-redis")
             
             for(var a of this.config.express)
             {
+                if(a.checks)
+                {
+                    for(var b in a.checks)
+                    {
+                        p.push(b)
+                        try{
+                            var temp=new (require(b))(a.checks[b])
+                            var px = temp.getPackages()
+                            p=p.concat(px)
+                        }catch(exp){}
+                    }
+                }
                 if(a.decodeUrl)
                 {
                     p.push("crypto")
@@ -76,6 +88,18 @@ module.exports = class databaseConfig
             
             for(var a of this.config.express)
             {
+                if(a.checks)
+                {
+                    for(var b in a.checks)
+                    {
+                        p.push(b)
+                        try{
+                            var temp=new (require(b))(a.checks[b])
+                            var px = temp.getVersionedPackages()
+                            p=p.concat(px)
+                        }catch(exp){}
+                    }
+                }
                 if(a.decodeUrl)
                 {
                     p.push("crypto")
