@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var captchapng = require('captchapng');
 var path = require('path'); 
+var fs=require('fs')
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -195,12 +196,15 @@ module.exports=class newExpr
             
         }
         else{
-            app.use(bodyParser.json());
-            app.use(bodyParser.urlencoded({extended: true}));
             if(config.bodyLimit)
                 app.use(bodyParser.json({limit: config.bodyLimit*1026*1024}));
+            else    
+                app.use(bodyParser.json());
+                
             if(config.urlLimit)
                 app.use(bodyParser.urlencoded({limit: config.urlLimit*1026*1024,extended: true}));
+            else 
+                app.use(bodyParser.urlencoded({extended: true}));
             
         }
     }
@@ -217,7 +221,10 @@ module.exports=class newExpr
         if(config.https)
         {
             var http = require('https');
-            var server = http.createServer(app);
+            var privateKey  = fs.readFileSync(config.https.key, 'utf8');
+            var certificate = fs.readFileSync(config.https.crt, 'utf8');
+            var credentials = {key: privateKey, cert: certificate};
+            var server = http.createServer(credentials,app);
             server.listen(config.https.port);
             console.log(global.consoleColor.green,'http run at port '+ config.https.port)
             this.server=server
@@ -340,8 +347,12 @@ module.exports=class newExpr
                 
                 if(dd && dd.directFileDownload)
                 {
-                    fs.readFile(data.directFileDownload,function(err, data1){
+                    fs.readFile(dd.directFileDownload,function(err, data1){
                         //return  res.status(200).end(data1);
+                        if(dd.type)
+                        {
+                            res.set( 'Content-Type', dd.type  );
+                        }
                         return  self.sendData(self,res,200,data1)
                     })
                     return

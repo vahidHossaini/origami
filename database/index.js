@@ -168,6 +168,12 @@ module.exports = class database
         if(!a.name || !dbs[a.name])
             return func({message:'connection not exist'})
         dbs[a.name].Search(a.table,a.query,a.odata,(ee,dd)=>{
+
+            if(ee)
+            {
+                console.log(ee)
+                return func({m:"error"})
+            }
             if(dd.value.length)
             {
                 return func(null,dd.value[0])

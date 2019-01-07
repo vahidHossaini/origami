@@ -161,7 +161,7 @@ module.exports = class distributorService
             return new Promise(function (resolve, reject) {
                 var imp=mself.checkInputs(domain,subDomain,data.data,mself)
                 if(!imp)
-                    reject({m:'not Valid Inputs'})
+                    return reject({m:'not Valid Inputs'})
                 route[domain][subDomain].func(data,(ee,dd)=>{
                     if(ee)
                         return reject(ee)

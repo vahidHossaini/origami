@@ -44,17 +44,26 @@ var convert = function(token)
              {
                  return null
              }
-             if(token.value=="Edm.SByte")
+
+             if(token.value=="Edm.SByte" || token.value=="Edm.Byte")
              {
                  return parseInt(token.raw)
              }
-             if(token.value=="Edm.Int16")
+             if(token.value=="Edm.Int16" || token.value=="Edm.Int32"||token.value=="Edm.Int64")
              {
                  return parseInt(token.raw)
+             } 
+
+
+//Edm.DateTime
+             if(token.value=="Edm.Decimal"|| token.value=="Edm.Double"||token.value=="Edm.Single")
+             {
+                 return parseFloat(token.raw)
              }
-             if(token.value=="Edm.Int32")
+
+             if(token.value=="Edm.Guid")
              {
-                 return parseInt(token.raw)
+                return token.raw
              }
              if(token.value=="Edm.String")
              {
@@ -93,7 +102,8 @@ var convert = function(token)
             var lf=convert(token.value.left) 
                 s['$gt']=cv
                 obj[lf] =s
-            
+            //console.log(JSON.stringify(token,null,4))
+           // console.log( token)
         }
         if(token.type=="GreaterOrEqualsExpression")
         {
@@ -164,12 +174,16 @@ module.exports = class mongodb
         var port= '27017'
         if(config.port)
             port=config.port
-        
+         
         self.url='mongodb://'+config.host+':'+port+'/'+config.database
         if(config.username)
         {
         self.url='mongodb://'+config.username+':'+config.password+'@'+config.host+':'+port+'/'+config.database
             
+        }
+        if(config.authSource)
+        {
+            self.url+="?authSource="+config.authSource
         }
         self.MongoClient= require('mongodb').MongoClient
         self.MongoClient.connect(self.url,{reconnectInterval: 10000,useNewUrlParser: true}, function(err, client) {
@@ -425,6 +439,8 @@ module.exports = class mongodb
             return func({m:"get collection error"})
         }
         var pxtcount=me.connection.collection(name)
+        console.log('//////////////////////////////////////')
+        console.log(JSON.stringify(syn.where,null,4) )
         if(selectGroup.length)
         {
             var marr=[]
@@ -724,9 +740,24 @@ module.exports = class mongodb
     {
         var self=this
         var where={}
-        for(var a of keys)
-        { 
-            where[a]={$eq:data[a]}
+        if(keys)
+        {
+            if(!keys.length)
+            {
+                return func({m:"key is not defined"})
+            }
+            for(var a of keys)
+            { 
+                where[a]={$eq:data[a]}
+            }
+        }
+        else
+        {
+            if(!data.where)
+            {
+                return func({m:"where is not defined"})
+            }
+            where=data.where
         }
         var pxt=self.connection.collection(name).deleteMany(where,(err,dt)=>{
             func(err,dt)
