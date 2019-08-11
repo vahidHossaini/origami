@@ -41,17 +41,17 @@ module.exports = class distributorService
                 return false
             }
             var dt=data[a.name]
-            var st=structs[domain]
-           // console.log('-------',dt)
+            var st=structs[domain] 
             return self.checkValidStruct(dt,st,a.type,self)
             
         }
     }
     checkValidStruct(dt,st,type,self)
     {
+            console.log('>>>>>>>>>>>>>>>>>>>   ',st,type)
         if(!st[type])
         {
-            if(type=='string' ||type=='number' ||type=='bool' )
+            if(type=='string' ||type=='number' ||type=='boolean' )
             {
                 if(typeof(dt)==type)
                     return true

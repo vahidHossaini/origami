@@ -439,8 +439,8 @@ module.exports = class mongodb
             return func({m:"get collection error"})
         }
         var pxtcount=me.connection.collection(name)
-        console.log('//////////////////////////////////////')
-        console.log(JSON.stringify(syn.where,null,4) )
+        // console.log('//////////////////////////////////////')
+        // console.log(JSON.stringify(syn.where,null,4) )
         if(selectGroup.length)
         {
             var marr=[]

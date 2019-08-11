@@ -7,6 +7,7 @@ var session = require('express-session');
 var captchapng = require('captchapng');
 var path = require('path'); 
 var fs=require('fs')
+var jwt;
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -34,7 +35,61 @@ function GetrandInt(n=12)
         str='1'+str
     return parseInt(str)
 }
+class sessionSetter{
+    constructor(config)
+    {
+        this.config=config.sessionManager
+        if(config.sessionManager.type=="jwt")
+            this.setter=this.jwtSetter
+        else
+            this.setter=this.normalSetter
+    }
+    jwtSetter(data,req)
+    {
+        if(data && data.session && data.session.length)
+        {
+            var dtx=req.session
+            if(!dtx)
+                dtx={}  
+            for(var ses of data.session)
+            {
+                if(ses.value==null)
+                    delete dtx[ses.name]
+                else {
+                    dtx[ses.name]=ses.value
+                }
+            }
+            delete data.session
+            req.session={} 
+            try{
 
+                data.token=jwt.sign(dtx, this.config.data.privateKey, { algorithm: this.config.data.algorithm});
+            }catch(exp)
+            {
+                console.log(exp)
+            }
+            console.log('setsession end',this.config.data)
+       
+        }
+
+    }
+    normalSetter(data,req)
+    {
+        if(data && data.session && data.session.length)
+        {
+            for(var ses of data.session)
+            {
+                if(ses.value==null)
+                    delete req.session[ses.name]
+                else {
+                    req.session[ses.name]=ses.value
+                }
+            }
+            delete data.session
+        }
+
+    }
+}
 
 module.exports=class newExpr
 {
@@ -128,24 +183,46 @@ module.exports=class newExpr
             }
             });
     }
-    setSessionMaager(app,config)
+    setJwtSession(app,config)
     {
+        app.use(function (req, res, next) {
+            var token = req.header('authorization')
+            jwt.verify(token,config.data.publicKey,function(err, decoded){
+                if(!err)
+                {
+                    req.session=decoded
+                } 
+                next()
+            });
+        });
+    }
+    setSessionManager(app,config)
+    {
+        this.sessionSetter =new sessionSetter(config)
         if(config.sessionManager)
         {
-            app.use(cookieParser());
-            var RedisStore = require('connect-redis')(session);
-            var objsession={host:config.sessionManager.connection.host,
-                    port:config.sessionManager.connection.port,}
-            if(config.sessionManager.connection.pass)    
+            if(config.sessionManager.type=="jwt")
             {
-                objsession.pass=config.sessionManager.connection.pass
-            }    
-            app.use(session({
-                store: new RedisStore( objsession),
-                secret: 'keyboard cat' ,
-                resave: true,
-                saveUninitialized: true
-            }));
+                jwt = require('jsonwebtoken');
+                this.setJwtSession(app,config.sessionManager);
+            }
+            else
+            {
+                app.use(cookieParser());
+                var RedisStore = require('connect-redis')(session);
+                var objsession={host:config.sessionManager.connection.host,
+                        port:config.sessionManager.connection.port,}
+                if(config.sessionManager.connection.pass)    
+                {
+                    objsession.pass=config.sessionManager.connection.pass
+                }    
+                app.use(session({
+                    store: new RedisStore( objsession),
+                    secret: 'keyboard cat' ,
+                    resave: true,
+                    saveUninitialized: true
+                }));
+            }
         }    
         else
         {    
@@ -288,7 +365,7 @@ module.exports=class newExpr
         app.set('trust proxy', 1)
         this.setPublic(app,config)
         this.setCrossDomain(app,config)
-        this.setSessionMaager(app,config)
+        this.setSessionManager(app,config)
         this.setCaptcha(app,config)
         this.setUrlParser(app,config)
         this.runServer(app,config)
@@ -326,18 +403,21 @@ module.exports=class newExpr
                 }
                 var dd=await dist.run(data.domain,data.service,data.body)
                 
-                if(dd && dd.session && dd.session.length)
-                {
-                    for(var ses of dd.session)
-                    {
-                        if(ses.value==null)
-                            delete req.session[ses.name]
-                        else {
-                            req.session[ses.name]=ses.value
-                        }
-                    }
-                    delete dd.session
-                }
+                // if(dd && dd.session && dd.session.length)
+                // {
+                //     for(var ses of dd.session)
+                //     {
+                //         if(ses.value==null)
+                //             delete req.session[ses.name]
+                //         else {
+                //             req.session[ses.name]=ses.value
+                //         }
+                //     }
+                //     delete dd.session
+                // }
+                this.sessionSetter.setter(dd,req)
+
+
                 if(dd && dd.redirect)
                 {
                     return res.redirect(dd.redirect)
