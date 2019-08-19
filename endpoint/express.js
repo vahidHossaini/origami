@@ -7,7 +7,9 @@ var session = require('express-session');
 var captchapng = require('captchapng');
 var path = require('path'); 
 var fs=require('fs')
+const requestIp = require('request-ip');
 var jwt;
+streamLimit={};
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -356,8 +358,21 @@ module.exports=class newExpr
         }
         return drivers
     }
-    getStream(path,type,res,req)
+    getStream(path,type,ip,self,res,req)
     {
+        config=self.config
+        // console.log('---->',config)
+        // console.log('---->',ip)
+        // console.log('---->',type)
+        if(!streamLimit[type])streamLimit[type]={}
+        if(config.streamLimit && config.streamLimit[type])
+        {
+            if(!streamLimit[type][ip])streamLimit[type][ip]=0
+            if(streamLimit[type][ip]>config.streamLimit[type])
+            {
+                return self.sendData(self,res,200,{message:'glb004'});
+            }
+        }
         const stat = fs.statSync(path)
         const fileSize = stat.size
         const range = req.headers.range
@@ -374,8 +389,17 @@ module.exports=class newExpr
               'Content-Range': `bytes ${start}-${end}/${fileSize}`,
               'Accept-Ranges': 'bytes',
               'Content-Length': chunksize,
-              'Content-Type': 'video/mp4',
+              'Content-Type': type,
             }
+            file.on('close', function () {   
+                if(!streamLimit[type][ip])streamLimit[type][ip]=0
+                    streamLimit[type][ip]--
+            }); 
+            file.on('open', function () {  
+               
+                if(!streamLimit[type][ip])streamLimit[type][ip]=0
+                    streamLimit[type][ip]++
+            });
             res.writeHead(206, head);
             file.pipe(res);
         }
@@ -386,7 +410,17 @@ module.exports=class newExpr
                 'Content-Type': type,
               }
               res.writeHead(200, head)
-              fs.createReadStream(path).pipe(res)
+              var file=fs.createReadStream(path)
+              file.on('close', function () {   
+                  if(!streamLimit[type][ip])streamLimit[type][ip]=0
+                      streamLimit[type][ip]--
+              }); 
+              file.on('open', function () {  
+                 
+                  if(!streamLimit[type][ip])streamLimit[type][ip]=0
+                      streamLimit[type][ip]++
+              });
+              file.pipe(res)
 
         }
     }
@@ -408,6 +442,7 @@ module.exports=class newExpr
             var data = this.reqToDomain(config,req,self,res)
             if(!data)
                 return
+                   
             var session = req.session;
             if(config.authz)
             {
@@ -435,8 +470,9 @@ module.exports=class newExpr
                         return self.sendData(self,res,200,{message:'glb004'})
                     }
                 }
-                var dd=await dist.run(data.domain,data.service,data.body)
-                
+                var clientIp = requestIp.getClientIp(req); 
+                var dd=await dist.run(data.domain,data.service,data.body);
+                dd.ip=clientIp;
                 // if(dd && dd.session && dd.session.length)
                 // {
                 //     for(var ses of dd.session)
@@ -473,7 +509,7 @@ module.exports=class newExpr
                 }
                 if(dd && dd.streamFileDownload)
                 {
-                    this.getStream(dd.streamFileDownload,dd.type,res,req)
+                    this.getStream(dd.streamFileDownload,dd.type,clientIp,self,res,req)
                     return
                 }
   
