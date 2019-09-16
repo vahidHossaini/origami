@@ -7,9 +7,8 @@ var session = require('express-session');
 var captchapng = require('captchapng');
 var path = require('path'); 
 var fs=require('fs')
-const requestIp = require('request-ip');
+var formidable ;
 var jwt;
-streamLimit={};
 function getRandomArbitrary(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
@@ -358,21 +357,8 @@ module.exports=class newExpr
         }
         return drivers
     }
-    getStream(path,type,ip,self,res,req)
+    getStream(path,type,res,req)
     {
-        config=self.config
-        // console.log('---->',config)
-        // console.log('---->',ip)
-        // console.log('---->',type)
-        if(!streamLimit[type])streamLimit[type]={}
-        if(config.streamLimit && config.streamLimit[type])
-        {
-            if(!streamLimit[type][ip])streamLimit[type][ip]=0
-            if(streamLimit[type][ip]>config.streamLimit[type])
-            {
-                return self.sendData(self,res,200,{message:'glb004'});
-            }
-        }
         const stat = fs.statSync(path)
         const fileSize = stat.size
         const range = req.headers.range
@@ -391,17 +377,20 @@ module.exports=class newExpr
               'Content-Length': chunksize,
               'Content-Type': type,
             }
-            file.on('close', function () {   
-                if(!streamLimit[type][ip])streamLimit[type][ip]=0
-                    streamLimit[type][ip]--
-            }); 
             file.on('open', function () {  
-               
-                if(!streamLimit[type][ip])streamLimit[type][ip]=0
-                    streamLimit[type][ip]++
+                var a=0;
+                console.log('open io1')
+            });
+            file.on('close', function () {  
+                console.log('close io1')
+                var a=0;
+            });
+            file.on('end', function () {  
+                console.log('end io1')
+                var a=0;
             });
             res.writeHead(206, head);
-            file.pipe(res);
+            file.pipe(res).on('finish', () => console.log('Done'));
         }
         else
         {
@@ -411,19 +400,60 @@ module.exports=class newExpr
               }
               res.writeHead(200, head)
               var file=fs.createReadStream(path)
-              file.on('close', function () {   
-                  if(!streamLimit[type][ip])streamLimit[type][ip]=0
-                      streamLimit[type][ip]--
-              }); 
-              file.on('open', function () {  
-                 
-                  if(!streamLimit[type][ip])streamLimit[type][ip]=0
-                      streamLimit[type][ip]++
-              });
-              file.pipe(res)
+            file.on('open', function () {  
+                var a=0;
+                console.log('open io2')
+            });
+            file.on('close', function () {  
+                var a=0;
+                console.log('close io2')
+            });
+            file.on('end', function () {  
+                console.log('end io1')
+                var a=0;
+            });
+              file.pipe(res).on('finish', () => console.log('Done'));
 
         }
+		req.connection.on('close',function(){
+				console.log('lose connection');
+				res.end();
+			});
     }
+	async getUploadFile(req)
+	{
+        return new Promise(async(res,rej)=>{    
+			var form = new formidable.IncomingForm();
+			form.parse(req, function (err, fields, files) {
+			console.log('3-----',files.path)
+			console.log('3-----',files)
+			
+				
+				if(err )
+					return  rej(err)
+				if(files.media &&  files.media.path)
+				{
+					return res(
+					{
+						path:files.media.path,
+						type:files.media.type,
+						name:files.media.name,
+						size:files.media.size
+					})
+				}
+				if( !files.filetoupload)
+					return rej({})
+				res(
+				{
+					path:files.filetoupload.path,
+					type:files.filetoupload.type,
+					name:files.filetoupload.name,
+					size:files.filetoupload.size
+				}
+				)
+			});
+		})
+	}
     constructor(config,dist)
     {
         var self=this
@@ -438,14 +468,20 @@ module.exports=class newExpr
         this.setUrlParser(app,config)
         this.runServer(app,config)
         var checks=this.addChecks(config,dist)
+		var uploadpathes={}
+		if(config.uploadpathes)
+		{
+			formidable = require('formidable');
+			uploadpathes=config.uploadpathes
+		}
         app.use(async(req, res, next)=> {
             var data = this.reqToDomain(config,req,self,res)
             if(!data)
                 return
-                   
             var session = req.session;
             if(config.authz)
             {
+				console.log('my session ',req.session)
                 let isAuthz =await self.checkAuthz(session,data,dist,config.authz)
                 if(!isAuthz) 
                     return self.sendData(self,res,200,{message:'glb002'})
@@ -454,6 +490,18 @@ module.exports=class newExpr
             var chp = await self.checkCaptcha(data.body.data,req,data)
             if(!chp) 
                 return self.sendData(self,res,200,{message:'glb003'})
+			//console.log('1-----',data.domain,data.service)
+			if(uploadpathes[data.domain] && uploadpathes[data.domain][data.service])
+			{
+				try{
+			//console.log('2-----')
+					data.body.$uploadedFile = await self.getUploadFile(req)
+				}
+				catch(exp){					
+					console.log(exp)
+					return self.sendData(self,res,200,{message:'glb004'})
+				}
+			}
             try{
                 
                 for(var ch of checks)
@@ -470,9 +518,8 @@ module.exports=class newExpr
                         return self.sendData(self,res,200,{message:'glb004'})
                     }
                 }
-                var clientIp = requestIp.getClientIp(req); 
-                var dd=await dist.run(data.domain,data.service,data.body);
-                dd.ip=clientIp;
+                var dd=await dist.run(data.domain,data.service,data.body)
+                
                 // if(dd && dd.session && dd.session.length)
                 // {
                 //     for(var ses of dd.session)
@@ -509,7 +556,7 @@ module.exports=class newExpr
                 }
                 if(dd && dd.streamFileDownload)
                 {
-                    this.getStream(dd.streamFileDownload,dd.type,clientIp,self,res,req)
+                    this.getStream(dd.streamFileDownload,dd.type,res,req)
                     return
                 }
   
