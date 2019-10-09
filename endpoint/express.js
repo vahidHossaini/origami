@@ -199,9 +199,9 @@ module.exports=class newExpr
     }
     setSessionManager(app,config)
     {
-        this.sessionSetter =new sessionSetter(config)
         if(config.sessionManager)
         {
+        this.sessionSetter =new sessionSetter(config)
             if(config.sessionManager.type=="jwt")
             {
                 jwt = require('jsonwebtoken');
@@ -242,7 +242,8 @@ module.exports=class newExpr
             var p = new captchapng(80,30,rand); // width,height,numeric captcha
             p.color(0, 0, 0, 0);  // First color: background (red, green, blue, alpha)
             p.color(80, 80, 80, 255);
-            req.session.captcha=rand
+			if(req.session)
+				req.session.captcha=rand
             var img = p.getBase64();
             var imgbase64 = new Buffer(img,'base64');
             res.writeHead(200, {
@@ -481,7 +482,7 @@ module.exports=class newExpr
             var session = req.session;
             if(config.authz)
             {
-				console.log('my session ',req.session)
+				//console.log('my session ',req.session)
                 let isAuthz =await self.checkAuthz(session,data,dist,config.authz)
                 if(!isAuthz) 
                     return self.sendData(self,res,200,{message:'glb002'})
@@ -532,6 +533,7 @@ module.exports=class newExpr
                 //     }
                 //     delete dd.session
                 // }
+				if(this.sessionSetter)
                 this.sessionSetter.setter(dd,req)
 
 
@@ -561,9 +563,11 @@ module.exports=class newExpr
                 }
   
               //return res.status(200).send({isDone:true,data:dd})
+			  
               return self.sendData(self,res,200,{isDone:true,data:dd})
             }catch(ee)
             {
+				console.log(ee)
                 return self.sendData(self,res,200,ee)
             }
 

@@ -61,6 +61,7 @@ module.exports = class origami
 
     _loadModule(a)
     {
+		console.log('load module------>',a.servers)
         if(a.servers)
         {
              

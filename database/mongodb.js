@@ -33,7 +33,7 @@ var convert = function(token)
 {
     var obj={} 
     if(token.value)
-    {
+    { 
         if(token.type=="Literal")
         {
              if(token.value=="Edm.Boolean")
@@ -76,14 +76,14 @@ var convert = function(token)
         }
         if(token.type=="ODataIdentifier")
         {
-            console.log('XXX->',token.value)
+            //console.log('XXX->',token.value)
             return token.value.name
         }
         if(token.type=="AndExpression")
         {
             var cv=convert(token.value.right)
             var lf=convert(token.value.left) 
-            console.log('VVVVV ',lf)
+           // console.log('VVVVV ',lf)
             return {"$and":[lf,cv]}
         }
         if(token.type=="EqualsExpression")
@@ -120,7 +120,7 @@ var convert = function(token)
             var cv=convert(token.value.right)
             var lf=convert(token.value.left) 
                 s['$lt']=cv
-                obj[lf] =s
+            obj[lf] =s
             
         }
         if(token.type=="LesserOrEqualsExpression")
@@ -129,7 +129,7 @@ var convert = function(token)
             var cv=convert(token.value.right)
             var lf=convert(token.value.left) 
                 s['$lte']=cv
-                obj[lf] =s
+            obj[lf] =s
             
         }
         if(token.type=="NotEqualsExpression")
@@ -274,7 +274,8 @@ module.exports = class mongodb
             }
             if(obj[a] && obj[a].$like)
             {
-                var stval= new RegExp(context.literal, "gi")            
+				//console.log('------>',context)
+                var stval= new RegExp( obj[a].$like , "gi")            
                 if(obj[a].$like[0]=='%' && obj[a].$like[obj[a].$like.length]=='%')
                     stval = new RegExp("^" + obj[a].$like + "$", "gi");
                 if(  obj[a].$like[obj[a].$like.length]=='%')
@@ -314,6 +315,7 @@ module.exports = class mongodb
         
         if(box.select)
         {
+					//console.log('------->',box.select)
             for(var x of box.select)
             {
                 if(typeof(x)=='string')
@@ -322,16 +324,16 @@ module.exports = class mongodb
                 }
                 else
                 {
-                    if(a.type=='function')
+                    if(x.type=='function')
                     {
-                        selectGroup.push(a)
+                        selectGroup.push(x)
                     }
                 }
             } 
         } 
         if(box.where)
         { 
-            console.log('------------------------**',box.where)
+            //console.log('------------------------**',box.where)
             this.objectToWhere(box.where) 
         }
         
@@ -422,6 +424,7 @@ module.exports = class mongodb
             retobj.top=odata.$top
         if(odata.$skip)
             retobj.skip=odata.$skip
+		 
         return(retobj)
     }
     Search(name,box,odata,func)
@@ -456,9 +459,21 @@ module.exports = class mongodb
                 if(a.name=='count')
                     grp[a.title]={ $sum: 1 } 
                 if(a.name=='sum')
-                    grp[a.title]={ $sum: a.field } 
+                    grp[a.title]={ $sum: '$'+a.field } 
             }
-            marr.push({$group:grp})
+			// console.log('###################################################################')
+			// console.log(grp)
+			var grpdata={$group:grp}
+            marr.push(grpdata)
+			if(syn.orders)
+			{
+				var ord={}
+				for(var xx in syn.orders)
+				{
+					ord["_id."+xx]=syn.orders[xx]
+				}
+				marr.push({$sort:ord})
+			}
             pxt=pxt.aggregate(marr)
             pxtcount=pxtcount.aggregate(marr)
         }

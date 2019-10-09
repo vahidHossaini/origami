@@ -32,12 +32,12 @@ module.exports = class distributorService
             return true
         for(var a of inp)
         {
-        console.log('--------------',data,a.name)
+        //console.log('--------------',data,a.name)
             if(!data[a.name] ) 
             {
                 if(a.nullable)
                     return true
-        console.log('--------------1')
+        //console.log('--------------1')
                 return false
             }
             var dt=data[a.name]
@@ -48,19 +48,19 @@ module.exports = class distributorService
     }
     checkValidStruct(dt,st,type,self)
     {
-            console.log('>>>>>>>>>>>>>>>>>>>   ',st,type)
+           // console.log('>>>>>>>>>>>>>>>>>>>   ',st,type)
         if(!st[type])
         {
             if(type=='string' ||type=='number' ||type=='boolean' )
             {
                 if(typeof(dt)==type)
                     return true
-        console.log('--------------2',type,dt)
+       // console.log('--------------2',type,dt)
                 return false
             }
             else
             {
-        console.log('--------------3',st)
+        //console.log('--------------3',st)
                 return false
             }
         }
@@ -75,14 +75,14 @@ module.exports = class distributorService
                 if(st[x]===dt)
                     isvalid=true
             }
-        console.log('--------------4',isvalid)
+       // console.log('--------------4',isvalid)
             return isvalid
         }
         var isvalid=true
         let mst=st[type].struct
         for(var x in mst)
         {
-            console.log('-------',x,dt[x],mst[x])
+            //console.log('-------',x,dt[x],mst[x])
             if(!dt[x])
             {
                 return mst[x].nullable
@@ -101,7 +101,7 @@ module.exports = class distributorService
         for(var b of srv)
         {
             var cli=new client()
-            cli.init(b)
+            cli.init(b,domain,this)
             //this.createSocket(servers[domain].srvs,b)
             servers[domain].srvs.push(cli)
         }
@@ -162,6 +162,7 @@ module.exports = class distributorService
                 var imp=mself.checkInputs(domain,subDomain,data.data,mself)
                 if(!imp)
                     return reject({m:'not Valid Inputs'})
+				//console.log('--->',route[domain][subDomain])
                 route[domain][subDomain].func(data,(ee,dd)=>{
                     if(ee)
                         return reject(ee)
