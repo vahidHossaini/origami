@@ -1,4 +1,4 @@
-var dist =new (require('./distributer/index'))()
+var dist =new (require('./distributor/index'))()
 var remotes={}
 global.auth={}
 global.authz={}
@@ -12,6 +12,19 @@ module.exports = class origami
         this.reloadData=reload
         this.modules=[]
         this.modulesId={}
+		
+        global.authz={}
+        global.auth={}
+		
+		
+		global.consoleColor={
+		  red:"\x1b[31m%s\x1b[0m",
+		  green:"\x1b[32m%s\x1b[0m",
+		  yellow:"\x1b[33m%s\x1b[0m",
+		  blue:"\x1b[34m%s\x1b[0m",
+		  white:"\x1b[37m%s\x1b[0m",
+		  cyan:"\x1b[36m%s\x1b[0m",
+		}
     }
     reload()
     {
@@ -59,9 +72,13 @@ module.exports = class origami
         }
     }
 
-    _loadModule(a)
+    async _loadModule(a)
     {
+<<<<<<< HEAD
+		console.log('load module------>',a.name)
+=======
 		console.log('load module------>',a.servers)
+>>>>>>> df03ac44ad857a1638beac0b390990d2fc3863ac
         if(a.servers)
         {
              
@@ -77,26 +94,29 @@ module.exports = class origami
         }
         else
         {
+			
             var m=new (require('./'+a.name+'/index'))(a,dist)
-            this.modules.push(m)
+            if(m.Init)
+				await m.Init();
+			this.modules.push(m)
             if(a.id)
             {
                 this.modulesId[a.id]=m
             }
         }
     }
-    start()
+    async start()
     {   
         for(var a of this.config)
         {
-            this._loadModule(a)
+            await this._loadModule(a)
         } 
-        var chokidar=require('chokidar')
-        var watcher = chokidar.watch(process.cwd()+'\\livelog.txt', {ignored: /^\./, persistent: true});
-        watcher.on('change', (path)=> {
-            this.reload()
+        // var chokidar=require('chokidar')
+        // var watcher = chokidar.watch(process.cwd()+'\\livelog.txt', {ignored: /^\./, persistent: true});
+        // watcher.on('change', (path)=> {
+            // this.reload()
             
-        })
+        // })
 
         
     }

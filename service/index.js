@@ -44,8 +44,13 @@ module.exports = class services
         global.authz[config.domain]=config.funcs
         global.auth[config.domain]={}
         global.captcha[config.domain]={}
+		if(!global.upload)global.upload={}
+		global.upload[config.domain]={}
+		
         for(var a of config.funcs)
         {
+			if(a.upload)
+				global.upload[config.domain][a.name]=a.upload;
             if(a.role)
             {
                 global.auth[config.domain][a.name]=a.role
@@ -88,8 +93,12 @@ module.exports = class services
         this.queue=new (require('./simpleQueue.js'))()
         var isQ=false
         var queueNames={}
+		if(!global.upload)global.upload={}
+			global.upload[config.domain]={}
         for(var a of config.funcs)
         {
+			if(a.upload)
+				global.upload[config.domain][a.name]=a.upload;
             if(a.queue)
             {
                 isQ=true
