@@ -76,10 +76,14 @@ module.exports = class moduleService
 		var index = new (require("ori"+this.config.type))({statics:config.config},dist);
 		var bt=new index.bootstrap(config.config)
 		var domain=config.type;
+        
         for(var a of bt.funcs)
 		{
 			if(a.upload)
+            {
+                if(!global.upload[domain])global.upload[domain]={}
 				global.upload[domain][a.name]=a.upload;
+            }
 			
 			dist.addFunction(domain,a.name, index[a.name],index,a.inputs)
 		} 

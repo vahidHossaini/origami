@@ -26,31 +26,4 @@ config Contains SubModule Configuration.
 For More Information , See The Documentation For Each Module 
 
 ### Sample
-- Endpoint [Doc](https://github.com/vahidHossaini/oriendpoint)
-
-Run Http Service On Port 8080
-change config.js to :
-
-	module.exports =[
-	{
-		id: '1',
-		name: 'baseclass'
-	},
-	{
-		id: '2',
-		name: 'module',
-		type: 'endpoint',
-		isNpm:true,
-		config: {
-			connections: [{
-					name: 'PublicSite',
-					'type': 'express', 
-					protocol: {
-						type: 'http',
-						port: 8080
-					},
-					public: ['./public']
-				}]
-		}
-	}
-	]
+- OrigamiSamples [sourcecode](https://github.com/vahidHossaini/origami-test)

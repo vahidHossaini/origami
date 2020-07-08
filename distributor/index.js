@@ -161,12 +161,8 @@ module.exports = class distributorService
             return new Promise(function (resolve, reject) {
                 var imp=mself.checkInputs(domain,subDomain,data.data,mself)
                 if(!imp)
-                    return reject({m:'not Valid Inputs'})
-<<<<<<< HEAD:distributor/index.js
-				console.log('--->',route)
-=======
-				//console.log('--->',route[domain][subDomain])
->>>>>>> df03ac44ad857a1638beac0b390990d2fc3863ac:distributer/index.js
+                    return reject({m:'not Valid Inputs'})  
+				//console.log('--->',route[domain][subDomain]) 
                 route[domain][subDomain].func(data,(ee,dd)=>{
                     if(ee)
                         return reject(ee)

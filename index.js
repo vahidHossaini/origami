@@ -3,6 +3,7 @@ var remotes={}
 global.auth={}
 global.authz={}
 global.captcha={} 
+global.upload={} 
 var fs=require('fs')
 module.exports = class origami
 {
@@ -73,12 +74,8 @@ module.exports = class origami
     }
 
     async _loadModule(a)
-    {
-<<<<<<< HEAD
-		console.log('load module------>',a.name)
-=======
-		console.log('load module------>',a.servers)
->>>>>>> df03ac44ad857a1638beac0b390990d2fc3863ac
+    { 
+		console.log('load module------>',a.name,'-',a.type)   
         if(a.servers)
         {
              
